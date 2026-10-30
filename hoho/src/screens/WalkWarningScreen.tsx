@@ -1,3 +1,4 @@
+import EnemySprite from '../components/EnemySprite';
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import ScrollingBackground from '../components/ScrollingBackground';
@@ -28,7 +29,7 @@ export default function WalkWarningScreen({ sessionSteps }: { sessionSteps: numb
           <HeroSprite walking />
         </View>
         <Animated.View style={[styles.enemy, { transform: [{ translateX: shake }] }]}>
-          <Text style={styles.enemyText}>👻</Text>
+          <EnemySprite size={72} />
           <Text style={styles.hp}>{'❤️'.repeat(hpLeft)}</Text>
         </Animated.View>
       </View>

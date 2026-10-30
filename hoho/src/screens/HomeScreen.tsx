@@ -1,3 +1,4 @@
+import EnemySprite from '../components/EnemySprite';
 import { StyleSheet, View } from 'react-native';
 import AppText from '../components/AppText';
 import ProgressBar from '../components/ProgressBar';
@@ -22,7 +23,9 @@ export default function HomeScreen({ available }: { available: boolean | null })
         <View style={s.hero}>
           <HeroSprite walking={false} />
         </View>
-        <AppText style={s.enemy}>👻</AppText>
+        <View style={s.enemy}>
+          <EnemySprite size={72} />
+        </View>
       </View>
 
       <View style={s.card}>
@@ -57,7 +60,7 @@ const s = StyleSheet.create({
   points: { position: 'absolute', top: 12, right: 12, backgroundColor: '#1b2040', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14 },
   pointsText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   hero: { position: 'absolute', left: 40, bottom: 50 },
-  enemy: { position: 'absolute', right: 50, bottom: 50, fontSize: 56 },
+  enemy: { position: 'absolute', right: 50, bottom: 50 },
   card: { backgroundColor: '#fff', margin: 12, marginBottom: 0, padding: 16, borderRadius: 14, gap: 8 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   name: { fontSize: 20, fontWeight: 'bold', color: '#1b2040' },
