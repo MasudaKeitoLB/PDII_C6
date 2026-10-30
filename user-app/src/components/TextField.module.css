@@ -1,0 +1,40 @@
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: var(--fs-label);
+  line-height: 24px;
+  font-weight: 700;
+  color: var(--color-sumi);
+}
+
+/* 353×76、角丸14。入力中は 緑のふち3.5px ＋ うす緑の外わく4px */
+.input {
+  width: 100%;
+  height: 76px;
+  margin-top: 12px;
+  padding: 0 18px 5px;
+  border: var(--border-ink) solid var(--color-sumi);
+  border-radius: 14px;
+  background: var(--color-white);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-sumi);
+  caret-color: var(--color-green);
+  outline: none;
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--color-hint);
+  font-weight: 400;
+  font-size: 24px;
+}
+
+.input:focus {
+  padding: 0 16.5px 5px;
+  border: 3.5px solid var(--color-green);
+  box-shadow: 0 0 0 4px var(--color-green-pale);
+}

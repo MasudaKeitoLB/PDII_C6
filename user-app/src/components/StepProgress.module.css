@@ -1,0 +1,39 @@
+.progress {
+  position: absolute;
+  top: 0;
+  left: 148px;
+  right: var(--gutter);
+}
+
+.count {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: right;
+  color: var(--color-sumi-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.bars {
+  display: flex;
+  gap: 4px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bars li {
+  flex: 1;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.todo {
+  background: var(--color-track);
+}
+
+.done {
+  background: var(--color-green);
+  outline: 1.5px solid var(--color-sumi);
+  outline-offset: -0.75px;
+}

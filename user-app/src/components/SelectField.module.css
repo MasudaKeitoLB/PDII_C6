@@ -1,0 +1,56 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--fs-label);
+  line-height: 24px;
+  font-weight: 700;
+}
+
+/* 高さ80、角丸16、影5px */
+.select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 80px;
+  margin-top: 12px;
+  padding: 0 15.75px 8px 17.5px;
+  border-radius: var(--radius-control);
+  text-align: left;
+}
+
+/* 「すべて選んでください」のときに まだの欄を朱色のふちにする（文の注意と いっしょに出す） */
+.select[aria-invalid="true"] {
+  border-color: var(--color-vermilion);
+  --shadow: var(--color-vermilion);
+}
+
+.value {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.value small {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-sumi-soft);
+}
+
+.placeholder {
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--color-hint);
+}
+
+.arrow {
+  flex: none;
+  margin-bottom: -8px;
+}

@@ -1,0 +1,27 @@
+/* スマホで開いたとき：画面いっぱいに出す */
+.phone {
+  position: relative;
+  height: 100%;
+  min-height: 560px;
+}
+
+/* パソコンで開いたとき：確認用のパネルと スマホの枠をならべる */
+.desk {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 56px;
+  min-height: 100%;
+  padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+@media (max-width: 860px) {
+  .desk {
+    gap: 32px;
+  }
+  .desk > aside {
+    display: none;
+  }
+}

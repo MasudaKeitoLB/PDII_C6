@@ -1,0 +1,66 @@
+/* 台：353×112、角丸20、ふち2px */
+.box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 112px;
+  padding: 0 12px;
+  border: var(--border-line) solid var(--color-line);
+  border-radius: var(--radius-box);
+  background: var(--color-white);
+}
+
+.change {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius-control);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.change:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.value,
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 76px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.value {
+  padding-bottom: 22px;
+  border-radius: 12px;
+}
+
+.number {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.unit {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-sumi-soft);
+}
+
+.input {
+  width: 100%;
+  border: 3.5px solid var(--color-green);
+  border-radius: 12px;
+  box-shadow: 0 0 0 4px var(--color-green-pale);
+  font-size: 44px;
+  font-weight: 700;
+  caret-color: var(--color-green);
+  outline: none;
+}

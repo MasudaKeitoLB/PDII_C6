@@ -1,0 +1,77 @@
+.slot {
+  position: relative;
+  flex: none;
+}
+
+.device {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  border-radius: 48px;
+  background: var(--color-white);
+  box-shadow:
+    0 0 0 10px var(--color-sumi),
+    0 24px 60px rgb(30 27 24 / 0.28);
+  overflow: hidden;
+  /* Figma の画面と同じく、ステータスバーの高さぶん 下げて始める */
+  --safe-top: 54px;
+  --safe-bottom: 34px;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+}
+
+.statusBar {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 54px;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.statusBar > * {
+  position: absolute;
+}
+
+.time {
+  left: 38px;
+  top: 20px;
+  width: 36px;
+  font-family: var(--font-latin);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  color: var(--color-sumi);
+}
+
+.island {
+  left: 134.5px;
+  top: 11px;
+}
+
+.signal {
+  left: 284px;
+  top: 20px;
+}
+
+.wifi {
+  left: 305px;
+  top: 21.2px;
+}
+
+.battery {
+  left: 326.4px;
+  top: 21.9px;
+}
+
+.homeIndicator {
+  position: absolute;
+  left: 129.5px;
+  top: 839px;
+  z-index: 50;
+  pointer-events: none;
+}

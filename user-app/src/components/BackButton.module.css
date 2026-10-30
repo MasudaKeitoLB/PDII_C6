@@ -1,0 +1,22 @@
+/* 116×56 の まるいボタン、影4px */
+.back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 116px;
+  height: 56px;
+  padding: 0 22px 0 18.5px;
+  border-radius: 28px;
+  font-size: var(--fs-button);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.back span {
+  position: relative;
+  top: -1px;
+}
+
+.arrow {
+  flex: none;
+}

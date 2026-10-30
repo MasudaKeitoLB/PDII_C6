@@ -1,0 +1,21 @@
+/* 主ボタン・副ボタン：353×72、角丸16、影5px（Figma 部品：ボタン） */
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 72px;
+  padding: 8px 52px 12px;
+  border-radius: var(--radius-control);
+  font-size: var(--fs-button);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.arrow {
+  position: absolute;
+  right: 19.5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
