@@ -1,0 +1,28 @@
+/* 押せるもの：ふちどり＋下の影。押したときは 影が消えて沈む（N-07） */
+.pressable {
+  position: relative;
+  border: var(--border-ink) solid var(--color-sumi);
+  background: var(--color-white);
+  color: var(--color-sumi);
+  box-shadow: 0 var(--depth, var(--press-depth)) 0 0 var(--shadow, var(--color-sumi));
+  transition:
+    transform 70ms ease-out,
+    box-shadow 70ms ease-out;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pressable:active:not(:disabled) {
+  transform: translateY(var(--depth, var(--press-depth)));
+  box-shadow: 0 0 0 0 var(--shadow, var(--color-sumi));
+}
+
+.shallow {
+  --depth: 4px;
+}
+
+.green {
+  background: var(--color-green);
+  color: var(--color-white);
+  --shadow: var(--color-green-shadow);
+}

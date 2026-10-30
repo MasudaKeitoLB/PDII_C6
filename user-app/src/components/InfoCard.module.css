@@ -1,0 +1,46 @@
+.card {
+  border: var(--border-line) solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: var(--color-white);
+}
+
+.sand {
+  border-color: transparent;
+  background: var(--color-sand);
+}
+
+.item {
+  display: grid;
+  grid-template-columns: var(--icon-col) minmax(0, 1fr);
+  column-gap: var(--icon-gap);
+  align-items: start;
+}
+
+.icon {
+  justify-self: center;
+  margin-top: var(--icon-top);
+}
+
+.texts {
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--fs-item-title);
+  line-height: 27px;
+  font-weight: 700;
+  color: var(--color-sumi);
+}
+
+.titleSmall {
+  font-size: 19px;
+  line-height: 25px;
+  font-weight: 700;
+  color: var(--color-sumi);
+}
+
+.text {
+  font-size: var(--fs-item-text);
+  line-height: var(--lh-item-text);
+  color: var(--color-sumi-soft);
+}

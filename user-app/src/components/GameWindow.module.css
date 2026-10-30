@@ -1,0 +1,16 @@
+.window {
+  position: relative;
+  border: 2px solid var(--color-sumi);
+  border-radius: 15px;
+  background: var(--color-navy);
+  color: var(--color-white);
+}
+
+.window::after {
+  content: "";
+  position: absolute;
+  inset: 2.5px;
+  border: 3px solid var(--color-white);
+  border-radius: 11.5px;
+  pointer-events: none;
+}

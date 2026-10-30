@@ -1,0 +1,24 @@
+.message {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 14px;
+  font-size: var(--fs-note);
+  line-height: 27px;
+  font-weight: 700;
+  color: var(--color-vermilion);
+}
+
+.mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-top: 0.5px;
+  border-radius: 50%;
+  background: var(--color-vermilion);
+  color: var(--color-white);
+  font-size: 16px;
+  line-height: 1;
+}

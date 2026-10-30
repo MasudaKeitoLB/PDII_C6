@@ -1,0 +1,65 @@
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--screen-bg);
+  overflow: hidden;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 戻るボタンと進み具合。デモの枠では ステータスバーの下 y=54 から始まる */
+.header {
+  position: relative;
+  height: 64px;
+  margin-top: var(--safe-top);
+  padding-left: 16px;
+  padding-top: 8px;
+}
+
+.body {
+  padding: 0 var(--gutter) 24px;
+}
+
+.footer {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 12px var(--gutter) calc(var(--safe-bottom) + 12px);
+}
+
+.heading {
+  margin-top: 19.5px;
+  font-size: var(--fs-heading);
+  line-height: var(--lh-heading);
+  font-weight: 700;
+  color: var(--color-sumi);
+}
+
+.lead {
+  margin-top: 18.5px;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-sumi-soft);
+}
+
+.leadSmall {
+  margin-top: 20px;
+  font-size: var(--fs-note);
+  line-height: 27px;
+  color: var(--color-sumi-soft);
+}
+
+.note {
+  font-size: var(--fs-note);
+  line-height: var(--lh-note);
+  color: var(--color-hint);
+}

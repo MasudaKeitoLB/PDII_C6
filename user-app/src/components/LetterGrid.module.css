@@ -1,0 +1,15 @@
+/* 62×56 のボタンを 5列。角丸12、影4px */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 11px 10.75px;
+}
+
+.letter {
+  height: 56px;
+  border-radius: 12px;
+  font-family: var(--font-latin);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}

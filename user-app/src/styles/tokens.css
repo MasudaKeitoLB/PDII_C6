@@ -1,0 +1,93 @@
+/*
+ * 歩歩〜HoHo〜 デザインのきまり（Figma「1 デザインのきまり」より）
+ * 高齢者が迷わず使えること（要件定義 13章）を土台にした、明るい1つの配色だけを使う。
+ */
+:root {
+  color-scheme: light;
+
+  /* 色 */
+  --color-kinari: #fbf6ea; /* 生成り：背景 */
+  --color-sumi: #1e1b18; /* 墨：文字（15.9:1） */
+  --color-sumi-soft: #4d4640; /* 墨（うすめ）：補足の文字（8.6:1） */
+  --color-hint: #6b6158; /* 画面の下の小さな説明 */
+  --color-green: #1f6e43; /* 緑：押せるボタン（白文字 6.2:1） */
+  --color-green-shadow: #14512f; /* 緑のボタンの影 */
+  --color-green-pale: #e4f2e8; /* うす緑：選択中 */
+  --color-gold: #ffc53d; /* 金：経験値・ポイント */
+  --color-navy: #1b2240; /* 紺：ゲームのウィンドウ */
+  --color-navy-sub: #dde4f7; /* 紺の上の補足の文字 */
+  --color-vermilion: #c2410c; /* 朱：目標のライン・注意 */
+  --color-line: #d9cfbf; /* 台のふち */
+  --color-track: #e6ddcc; /* 進み具合（まだのところ） */
+  --color-sand: #f3ebda; /* 見せるもの・見せないもの の台 */
+  --color-white: #ffffff;
+  --color-paper: #fcfcfc; /* はじめの画面の地 */
+  --color-sky: #8fd0f2; /* 冒険の背景の空 */
+  --color-desk: #ece6d8; /* デモ：スマホの外側 */
+
+  /* 書体 */
+  --font-ui: "BIZ UDPGothic", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo,
+    sans-serif;
+  --font-dot: "DotGothic16", var(--font-ui); /* ゲームの見出し（ロゴ）だけ */
+  --font-latin: "Inter", "Helvetica Neue", Arial, var(--font-ui); /* ローマ字のボタン */
+
+  /* 文字の大きさ：ふつう（M-02 で 大きい・とても大きい に切りかえる） */
+  --fs-heading: 28px;
+  --lh-heading: 41px;
+  --fs-body: 20px;
+  --lh-body: 32px;
+  --fs-label: 20px;
+  --fs-note: 18px;
+  --lh-note: 29px;
+  --fs-note-sm: 17px;
+  --fs-button: 22px;
+  --fs-choice: 24px;
+  --fs-item-title: 21px;
+  --fs-item-text: 18px;
+  --lh-item-text: 26px;
+
+  /* 形 */
+  --border-ink: 2.5px; /* 押せるもののふち */
+  --border-line: 2px; /* 台のふち */
+  --radius-control: 16px;
+  --radius-card: 16px;
+  --radius-box: 20px;
+  --press-depth: 5px; /* 押したとき 影が消えて沈む深さ（N-07） */
+
+  /* 画面の上下の余白（スマホの表示では小さく、デモの枠では ステータスバーの高さ） */
+  --safe-top: 8px;
+  --safe-bottom: 4px;
+  --gutter: 20px;
+}
+
+:root[data-text-size="large"] {
+  --fs-heading: 32px;
+  --lh-heading: 46px;
+  --fs-body: 24px;
+  --lh-body: 37px;
+  --fs-label: 24px;
+  --fs-note: 19px;
+  --lh-note: 30px;
+  --fs-note-sm: 19px;
+  --fs-button: 26px;
+  --fs-choice: 27px;
+  --fs-item-title: 24px;
+  --fs-item-text: 20px;
+  --lh-item-text: 29px;
+}
+
+:root[data-text-size="xlarge"] {
+  --fs-heading: 36px;
+  --lh-heading: 50px;
+  --fs-body: 28px;
+  --lh-body: 42px;
+  --fs-label: 28px;
+  --fs-note: 21px;
+  --lh-note: 33px;
+  --fs-note-sm: 21px;
+  --fs-button: 28px;
+  --fs-choice: 30px;
+  --fs-item-title: 27px;
+  --fs-item-text: 22px;
+  --lh-item-text: 32px;
+}

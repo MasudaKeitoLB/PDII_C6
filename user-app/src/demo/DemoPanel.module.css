@@ -1,0 +1,133 @@
+.panel {
+  width: 300px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 24px 22px;
+  border: var(--border-line) solid var(--color-line);
+  border-radius: 20px;
+  background: var(--color-kinari);
+  color: var(--color-sumi);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-green);
+}
+
+.title {
+  margin: 2px 0 6px;
+  font-family: var(--font-dot);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.lead {
+  color: var(--color-sumi-soft);
+}
+
+.section {
+  margin-top: 20px;
+}
+
+.sectionTitle {
+  margin: 0 0 8px;
+  padding-bottom: 6px;
+  border-bottom: var(--border-line) solid var(--color-line);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.toggle {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.toggle input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 2px 0 0;
+  accent-color: var(--color-green);
+}
+
+.toggle strong {
+  display: block;
+  font-size: 15px;
+}
+
+.toggle small {
+  display: block;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-sumi-soft);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: flex;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  color: var(--color-sumi);
+  text-decoration: none;
+}
+
+.link:hover {
+  background: var(--color-white);
+}
+
+.link[aria-current="page"] {
+  background: var(--color-green-pale);
+  font-weight: 700;
+}
+
+.link[aria-disabled="true"] {
+  color: #9a9086;
+  cursor: not-allowed;
+}
+
+.code {
+  flex: none;
+  width: 44px;
+  font-family: var(--font-latin);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 24px;
+  color: var(--color-green);
+}
+
+.link[aria-disabled="true"] .code {
+  color: inherit;
+}
+
+.reset {
+  width: 100%;
+  padding: 10px 12px;
+  border: var(--border-ink) solid var(--color-sumi);
+  border-radius: 12px;
+  background: var(--color-white);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.reset:active {
+  background: var(--color-sand);
+}
+
+.note {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--color-sumi-soft);
+}
