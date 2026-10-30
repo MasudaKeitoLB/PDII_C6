@@ -1,14 +1,22 @@
 // 端末への保存。プライベートモードなどで使えないときは メモリに置いて 動き続ける。
+//
+// このページで書いた値は メモリにも持っておき、読むときは メモリを先に見る。
+// （読めるが書けない localStorage では、書いた値が localStorage に残らないため）
 
-const memory = new Map<string, string>();
+/** null は「このページで消した」しるし */
+const memory = new Map<string, string | null>();
+
+function readRaw(key: string): string | null {
+  if (memory.has(key)) return memory.get(key) ?? null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
 
 export function readJson<T>(key: string, fallback: T): T {
-  let raw: string | null = null;
-  try {
-    raw = window.localStorage.getItem(key);
-  } catch {
-    raw = memory.get(key) ?? null;
-  }
+  const raw = readRaw(key);
   if (raw === null) return fallback;
   try {
     return JSON.parse(raw) as T;
@@ -28,7 +36,7 @@ export function writeJson(key: string, value: unknown): void {
 }
 
 export function removeKey(key: string): void {
-  memory.delete(key);
+  memory.set(key, null);
   try {
     window.localStorage.removeItem(key);
   } catch {

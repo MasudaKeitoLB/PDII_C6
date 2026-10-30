@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { BackButton } from './BackButton';
 import { StepProgress } from './StepProgress';
 import styles from './Screen.module.css';
@@ -33,8 +33,18 @@ const BACKGROUNDS: Record<ScreenBackground, string> = {
 /** 1画面1アクション（N-04）の画面のわく。主ボタンはいつも画面の下（U-01 注記） */
 export function Screen({ title, background = 'white', onBack, progress, scene, footer, footerGap, footerBottom, overlay, children }: ScreenProps) {
   const hasHeader = Boolean(onBack || progress);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    // 画面がかわったら、キーボードや読み上げの位置を 新しい画面に移す（入力欄がある画面は 入力欄のまま）
+    const section = sectionRef.current;
+    if (section && !section.contains(document.activeElement)) section.focus({ preventScroll: true });
+  }, []);
+
   return (
     <section
+      ref={sectionRef}
+      tabIndex={-1}
       className={styles.screen}
       style={{ '--screen-bg': BACKGROUNDS[background] } as CSSProperties}
       aria-label={title}

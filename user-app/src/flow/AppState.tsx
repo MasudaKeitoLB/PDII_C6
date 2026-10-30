@@ -62,6 +62,30 @@ interface AppState {
 
 const AppStateContext = createContext<AppState | null>(null);
 
+/** 端末に残っていた 登録の途中の入力を読む。古い形や こわれた値は 空にもどす */
+function restoreDraft(): RegistrationDraft {
+  const saved = readJson<unknown>(DRAFT_KEY, null);
+  if (typeof saved !== 'object' || saved === null) return EMPTY_REGISTRATION;
+  const d = saved as Record<string, unknown>;
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  const b = (typeof d.birthday === 'object' && d.birthday !== null ? d.birthday : {}) as Record<string, unknown>;
+  const consent = d.shareConsent as Partial<ShareConsent> | null | undefined;
+  return {
+    name: typeof d.name === 'string' ? d.name : '',
+    birthday: { year: num(b.year), month: num(b.month), day: num(b.day) },
+    letter: typeof d.letter === 'string' && /^[A-Z]$/.test(d.letter) ? d.letter : null,
+    nickname: typeof d.nickname === 'string' ? d.nickname : '',
+    gender: d.gender === 'female' || d.gender === 'male' || d.gender === 'unanswered' ? d.gender : null,
+    heightCm: num(d.heightCm),
+    weightKg: num(d.weightKg),
+    dailyGoalSteps: num(d.dailyGoalSteps) ?? EMPTY_REGISTRATION.dailyGoalSteps,
+    shareConsent:
+      typeof consent === 'object' && consent !== null && typeof consent.agreed === 'boolean' && typeof consent.decidedAt === 'string'
+        ? { agreed: consent.agreed, decidedAt: consent.decidedAt }
+        : null,
+  };
+}
+
 function routeFromHash(fallback: RouteId): RouteId {
   const id = window.location.hash.replace(/^#/, '');
   return isRouteId(id) ? id : fallback;
@@ -70,12 +94,9 @@ function routeFromHash(fallback: RouteId): RouteId {
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<RegisteredUser | null>(() => currentUser());
   const [route, setRoute] = useState<RouteId>(() => routeFromHash(user ? 'home' : 'start'));
-  const [registration, setRegistration] = useState<RegistrationDraft>(() => ({
-    ...EMPTY_REGISTRATION,
-    ...readJson<Partial<RegistrationDraft>>(DRAFT_KEY, {}),
-  }));
+  const [registration, setRegistration] = useState<RegistrationDraft>(restoreDraft);
   const [loginDraft, setLoginDraft] = useState<LoginDraft>(EMPTY_LOGIN);
-  const [useLoginLetter, setUseLoginLetterState] = useState<boolean>(() => readJson(LETTER_SETTING_KEY, true));
+  const [useLoginLetter, setUseLoginLetterState] = useState<boolean>(() => readJson<unknown>(LETTER_SETTING_KEY, true) !== false);
 
   useEffect(() => {
     const onHashChange = () => setRoute(routeFromHash('start'));

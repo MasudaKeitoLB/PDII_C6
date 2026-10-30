@@ -27,8 +27,10 @@ export function NumberStepper({ id, label, value, unit, min, max, step = 1, onCh
   }, [editing]);
 
   const commit = () => {
-    const n = Number(draft.normalize('NFKC'));
-    if (draft.trim() !== '' && Number.isFinite(n)) onChange(clamp(Math.round(n), min, max));
+    // 全角の数字や「cm」「kg」がまざっていても 数字だけを受けとる（例：「１６５cm」→ 165）
+    const digits = draft.normalize('NFKC').replace(/[^0-9.]/g, '');
+    const n = Number(digits);
+    if (digits !== '' && Number.isFinite(n)) onChange(clamp(Math.round(n), min, max));
     setEditing(false);
   };
 

@@ -9,8 +9,13 @@ interface StepProgressProps {
 export function StepProgress({ current, total }: StepProgressProps) {
   return (
     <div className={styles.progress}>
-      <p className={styles.count} aria-label={`${total}つのうち ${current}つめ`}>
-        {current} / {total}
+      <p className={styles.count}>
+        <span aria-hidden="true">
+          {current} / {total}
+        </span>
+        <span className="visually-hidden">
+          {total}つのうち {current}つめ
+        </span>
       </p>
       <ol className={styles.bars} aria-hidden="true">
         {Array.from({ length: total }, (_, i) => (

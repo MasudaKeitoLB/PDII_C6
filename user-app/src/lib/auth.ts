@@ -16,8 +16,32 @@ function sameBirthday(a: LoginCredentials['birthday'], b: LoginCredentials['birt
   return a.year === b.year && a.month === b.month && a.day === b.day;
 }
 
+/** 保存されていた1人分が 使える形か（古い形や こわれたデータは 読みとばす） */
+function isRegisteredUser(value: unknown): value is RegisteredUser {
+  if (typeof value !== 'object' || value === null) return false;
+  const u = value as Partial<RegisteredUser>;
+  const b = u.birthday;
+  return (
+    typeof u.id === 'string' &&
+    typeof u.name === 'string' &&
+    typeof u.nickname === 'string' &&
+    typeof b === 'object' &&
+    b !== null &&
+    typeof b.year === 'number' &&
+    typeof b.month === 'number' &&
+    typeof b.day === 'number' &&
+    (u.gender === 'female' || u.gender === 'male' || u.gender === 'unanswered') &&
+    typeof u.heightCm === 'number' &&
+    typeof u.weightKg === 'number' &&
+    typeof u.dailyGoalSteps === 'number' &&
+    typeof u.shareConsent === 'object' &&
+    u.shareConsent !== null
+  );
+}
+
 function loadUsers(): RegisteredUser[] {
-  return readJson<RegisteredUser[]>(USERS_KEY, []);
+  const stored = readJson<unknown>(USERS_KEY, []);
+  return Array.isArray(stored) ? stored.filter(isRegisteredUser) : [];
 }
 
 export async function registerUser(profile: Profile, shareConsent: ShareConsent): Promise<RegisteredUser> {
@@ -40,7 +64,8 @@ export async function registerUser(profile: Profile, shareConsent: ShareConsent)
  */
 export async function login(credentials: LoginCredentials): Promise<RegisteredUser | null> {
   const name = normalizeName(credentials.name);
-  const user = loadUsers().find(
+  // 同じ人が登録しなおしたときは 新しい登録で入る
+  const user = loadUsers().reverse().find(
     (u) =>
       normalizeName(u.name) === name &&
       sameBirthday(u.birthday, credentials.birthday) &&
@@ -60,10 +85,6 @@ export function currentUser(): RegisteredUser | null {
 
 export function logout(): void {
   removeKey(SESSION_KEY);
-}
-
-export function hasRegisteredUsers(): boolean {
-  return loadUsers().length > 0;
 }
 
 /** デモ用：この端末に保存した登録をすべて消す */

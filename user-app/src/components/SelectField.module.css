@@ -24,6 +24,12 @@
   text-align: left;
 }
 
+/* 「すべて選んでください」のときに まだの欄を朱色のふちにする（文の注意と いっしょに出す） */
+.select[aria-invalid="true"] {
+  border-color: var(--color-vermilion);
+  --shadow: var(--color-vermilion);
+}
+
 .value {
   font-size: 30px;
   font-weight: 700;

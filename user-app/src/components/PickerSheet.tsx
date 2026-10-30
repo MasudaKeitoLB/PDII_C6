@@ -40,10 +40,12 @@ export function PickerSheet<T extends string | number>({
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const list = listRef.current;
     const target = selected ?? initialFocus;
-    const el = listRef.current?.querySelector<HTMLButtonElement>(`[data-value="${String(target)}"]`);
-    if (el) {
-      el.scrollIntoView({ block: 'center' });
+    const el = list?.querySelector<HTMLButtonElement>(`[data-value="${String(target)}"]`);
+    if (list && el) {
+      // 一覧の中だけを動かして 選んでいる行をまん中に出す（scrollIntoView は外側のページまで動かすことがある）
+      list.scrollTop = Math.max(0, el.offsetTop - list.offsetTop - (list.clientHeight - el.offsetHeight) / 2);
       el.focus({ preventScroll: true });
     }
     const onKey = (e: KeyboardEvent) => {
