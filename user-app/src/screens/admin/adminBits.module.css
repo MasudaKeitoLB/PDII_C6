@@ -1,0 +1,61 @@
+/* 前週との差：▲（緑）／▼（墨） 14×9 */
+.diff {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.up {
+  color: var(--color-green);
+}
+.down {
+  color: var(--color-sumi-soft);
+}
+.triangleUp,
+.triangleDown {
+  flex: none;
+  width: 14px;
+  height: 9px;
+  background: currentColor;
+}
+.triangleUp {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.triangleDown {
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+/* 受信の注意：朱の丸に 白の「!」 16×16（説明の行では 14×14） */
+.warn {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-vermilion);
+  color: var(--color-white);
+  font-family: var(--font-latin);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+}
+.warnSmall {
+  width: 14px;
+  height: 14px;
+  font-size: 11px;
+}
+
+.received {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+/* 画面ごとの文字の色より 強くする */
+.received.late {
+  color: var(--color-vermilion);
+  font-weight: 700;
+}
+

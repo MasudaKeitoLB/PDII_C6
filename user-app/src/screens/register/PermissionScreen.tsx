@@ -18,7 +18,7 @@ import s from '../screens.module.css';
  * スマホの許可画面の前に、理由を ふだんの言葉で説明する。
  */
 export function PermissionScreen() {
-  const { navigate, registration, resetRegistration, setUser, useLoginLetter } = useAppState();
+  const { navigate, registration, resetRegistration, useLoginLetter } = useAppState();
   const [busy, setBusy] = useState(false);
   const [missing, setMissing] = useState(false);
 
@@ -40,8 +40,8 @@ export function PermissionScreen() {
       weightKg: r.weightKg ?? DEFAULT_WEIGHT_KG[r.gender],
       dailyGoalSteps: r.dailyGoalSteps,
     };
-    const user = await registerUser(profile, r.shareConsent ?? { agreed: false, decidedAt: new Date().toISOString() });
-    setUser(user);
+    // 「今は見せない」を選んだときや まだ選んでいないときは 見せない（N-14）
+    registerUser(profile, r.shareConsent?.agreed ?? false);
     resetRegistration();
     setBusy(false);
     navigate('register-ready');

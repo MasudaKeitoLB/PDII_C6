@@ -1,0 +1,516 @@
+/* 管理者画面：スマホ版（AM-01〜AM-03）。数値は Figma の各画面の位置から */
+
+/* 上のステータスバーの所は いつも紺にする（下に流した内容と 白い文字が 重ならないように） */
+.statusShade {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: var(--safe-top);
+  margin-bottom: calc(-1 * var(--safe-top));
+  background: var(--color-navy);
+}
+
+/* ---------- AM-01 ログイン ---------- */
+
+.loginHeaderBg {
+  display: block;
+  width: 393px;
+  height: 300px;
+  background: var(--color-navy);
+}
+/* 冒険の背景の帯：395×95 */
+.loginStrip {
+  display: block;
+  width: 395px;
+  height: 95px;
+  overflow: hidden;
+}
+.loginStrip img {
+  margin-top: -200px;
+}
+.loginLogo {
+  width: 393px;
+  font-family: var(--font-dot);
+  font-size: 56px;
+  line-height: 81px;
+  text-align: center;
+  color: var(--color-gold);
+}
+/* 管理者用：128×30 */
+.loginBadge {
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 30px;
+  padding-bottom: 4px;
+  border-radius: 15px;
+  background: var(--color-white);
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+.loginBody {
+  padding-top: 21px;
+}
+
+/* ---------- AM-02 利用者の一覧 ---------- */
+
+/* 紺の帯：393×148 */
+.listHeader {
+  padding: calc(var(--safe-top) + 22px) 20px 18px;
+  background: var(--color-navy);
+  color: var(--color-white);
+}
+.listTitle {
+  font-size: 24px;
+  line-height: 24px;
+  font-weight: 700;
+}
+.count {
+  color: var(--color-gold);
+}
+.listSubRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 15px;
+}
+.listSub {
+  min-width: 0;
+  font-size: 15px;
+  line-height: 15px;
+  color: var(--color-navy-sub);
+}
+.logout {
+  flex: none;
+  margin: -12px -10px -12px 0;
+  padding: 12px 10px;
+  font-size: 15px;
+  line-height: 15px;
+  font-weight: 700;
+  color: var(--color-white);
+}
+.logout:focus-visible,
+.update:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* データの時点：393×52 */
+.stampBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 52px;
+  padding: 0 20px;
+  background: var(--color-white);
+}
+.stamp {
+  margin-top: -4px;
+  font-size: 16px;
+  line-height: 16px;
+  color: var(--color-sumi-soft);
+}
+/* 更新：76×32、ふち1.5px */
+.update {
+  flex: none;
+  width: 76px;
+  height: 32px;
+  padding-bottom: 2px;
+  border: 1.5px solid var(--color-sumi);
+  border-radius: 16px;
+  background: var(--color-white);
+  font-size: 15px;
+  font-weight: 700;
+}
+.update:active {
+  background: var(--color-sand);
+}
+
+.sort {
+  margin-top: 14px;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 利用者のカード：353×112、ふち2px、影3px */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 112px;
+  padding: 15px 172px 14px 16px;
+  border-width: 2px;
+  border-radius: 14px;
+  text-align: left;
+  --depth: 3px;
+}
+.card:focus-visible {
+  outline: 3px solid var(--color-green);
+  outline-offset: 3px;
+}
+.cardName {
+  font-size: 21px;
+  line-height: 21px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.cardAge {
+  margin-top: 11px;
+  font-size: 15px;
+  line-height: 15px;
+  color: var(--color-sumi-soft);
+  white-space: nowrap;
+}
+.cardReceived {
+  height: 14px;
+  margin-top: 18px;
+  font-size: 14px;
+  line-height: 14px;
+  color: var(--color-hint);
+}
+/* 「！」（16px）は 文字の高さ（14px）から 下にはみ出して置く（Figma と同じ） */
+.cardReceived > [aria-hidden] {
+  margin-top: 3px;
+}
+.cardSteps {
+  position: absolute;
+  top: 12px;
+  right: 36px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap;
+}
+.cardStepsNumber {
+  font-size: 26px;
+  line-height: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cardStepsUnit {
+  font-size: 13px;
+  line-height: 13px;
+  font-weight: 700;
+  color: var(--color-sumi-soft);
+}
+.cardBar {
+  position: absolute;
+  top: 50px;
+  right: 36px;
+  width: 120px;
+}
+.cardGoal {
+  position: absolute;
+  top: 67px;
+  right: 36px;
+  font-size: 13px;
+  line-height: 13px;
+  color: var(--color-sumi-soft);
+  white-space: nowrap;
+}
+.cardChevron {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  transform: translateY(-50%);
+}
+
+.empty {
+  margin-top: 24px;
+  padding: 20px 18px;
+  border-radius: var(--radius-card);
+  background: var(--color-sand);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--color-sumi-soft);
+}
+
+.footNote {
+  margin-top: 31px;
+  font-size: 15px;
+  line-height: 15px;
+  color: var(--color-sumi-soft);
+}
+.footLegend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 11px;
+  font-size: 15px;
+  line-height: 15px;
+  color: var(--color-sumi-soft);
+}
+
+/* ---------- AM-03 測定結果 ---------- */
+
+/* 紺の帯：393×258 */
+.userHeader {
+  padding: calc(var(--safe-top) + 8px) 20px 14px 16px;
+  background: var(--color-navy);
+  color: var(--color-white);
+}
+.userName {
+  margin: 26px 0 0 4px;
+  font-size: 26px;
+  line-height: 26px;
+  font-weight: 700;
+}
+.userSub {
+  margin: 14px 0 0 4px;
+  font-size: 16px;
+  line-height: 16px;
+  color: var(--color-navy-sub);
+}
+/* データの時点：252×30 */
+.userStamp {
+  display: inline-block;
+  min-width: 252px;
+  height: 30px;
+  margin: 14px 0 0 4px;
+  padding: 0 16px;
+  border-radius: 15px;
+  background: var(--color-navy-2);
+  font-size: 14px;
+  line-height: 30px;
+  font-weight: 700;
+}
+
+.unavailable {
+  margin-top: 24px;
+  padding: 20px 18px;
+  border-radius: var(--radius-card);
+  background: var(--color-sand);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+/* 本日：353×166 */
+.todayCard {
+  position: relative;
+  height: 166px;
+  margin-top: 18px;
+  padding: 15px 16px 0;
+  border: var(--border-line) solid var(--color-line);
+  border-radius: var(--radius-card);
+}
+.cardLabel {
+  font-size: 17px;
+  line-height: 17px;
+  font-weight: 700;
+  color: var(--color-sumi-soft);
+}
+.todaySteps {
+  height: 46px;
+  margin-top: 6px;
+  font-size: 46px;
+  line-height: 46px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.todayUnit {
+  font-size: 22px;
+}
+.todayDiff {
+  position: absolute;
+  top: 40px;
+  right: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.diffValue {
+  font-size: 16px;
+  line-height: 16px;
+}
+.diffNote {
+  margin: 11px 10px 0 0;
+  font-size: 13px;
+  line-height: 13px;
+  color: var(--color-sumi-soft);
+  white-space: nowrap;
+}
+.todayBar {
+  margin-top: 24px;
+}
+.todayGoal {
+  margin-top: 11px;
+  font-size: 15px;
+  line-height: 15px;
+  color: var(--color-sumi-soft);
+}
+
+/* 移動距離・消費カロリー：170.5×96 */
+.miniCards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.miniCard {
+  position: relative;
+  height: 96px;
+  padding: 16px 12px 0 14px;
+  border: var(--border-line) solid var(--color-line);
+  border-radius: var(--radius-card);
+}
+.miniHead {
+  padding-left: 30px;
+  font-size: 15px;
+  line-height: 15px;
+  font-weight: 700;
+  color: var(--color-sumi-soft);
+  white-space: nowrap;
+}
+/* 記録の画面と同じアイコンを 6/7 の大きさで出す（21×24・18×21） */
+.miniIcon {
+  position: absolute;
+  left: 13.5px;
+  top: 12px;
+  transform: scale(0.857);
+  transform-origin: 0 0;
+}
+.miniIconCalorie {
+  left: 15px;
+}
+.miniValue {
+  margin-top: 17px;
+  font-size: 30px;
+  line-height: 30px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.miniUnit {
+  font-size: 16px;
+  color: var(--color-sumi-soft);
+}
+
+.period {
+  margin-top: 20px;
+}
+
+/* グラフ：353×300 */
+.chartCard {
+  margin-top: 16px;
+  padding: 15px 0 18px;
+  border: var(--border-line) solid var(--color-line);
+  border-radius: var(--radius-card);
+}
+.chartCard > :last-child {
+  margin-top: 54.3px;
+}
+.chartHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px 0 16px;
+}
+.chartTitle {
+  font-size: 17px;
+  line-height: 17px;
+  font-weight: 700;
+}
+.legend {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 14px;
+  color: var(--color-sumi-soft);
+  white-space: nowrap;
+}
+.legendBar {
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border-radius: 2px;
+  background: var(--color-bar);
+}
+.legendGoal {
+  width: 22px;
+  height: 2px;
+  margin: 0 6px 0 18px;
+  background: repeating-linear-gradient(to right, var(--color-vermilion) 0 4px, transparent 4px 7px);
+}
+
+/* 目標歩数：353×82 */
+.goalCard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  height: 82px;
+  margin-top: 16px;
+  padding: 15px 16px 0;
+  border: var(--border-line) solid var(--color-line);
+  border-radius: var(--radius-card);
+}
+.goalValue {
+  margin-top: 8px;
+  font-size: 24px;
+  line-height: 24px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.goalUnit {
+  font-size: 16px;
+}
+/* 変更する：112×46、影3px */
+.changeButton {
+  flex: none;
+  width: 112px;
+  height: 46px;
+  margin-top: 1px;
+  padding-bottom: 2px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  --depth: 3px;
+}
+
+.userNote {
+  margin: 15px 0 4px;
+  font-size: 13px;
+  line-height: 13px;
+  color: var(--color-hint);
+}
+
+/* ---------- 目標歩数を変える窓（AM-03・AP-03） ---------- */
+
+.goalDialog {
+  display: flex;
+  flex-direction: column;
+}
+.goalDialogTitle {
+  font-size: 22px;
+  line-height: 1.45;
+  font-weight: 700;
+  text-align: center;
+}
+.goalDialogLead {
+  margin-top: 10px;
+  font-size: 16px;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--color-sumi-soft);
+}
+.goalDialogButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}

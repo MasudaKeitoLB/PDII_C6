@@ -1,0 +1,59 @@
+/* H-02：紺の画面。上から 歩いています（192×44）→ 絵 → 文 → 下の台（353×64） */
+.lock {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--safe-top) + 26px) var(--gutter) calc(var(--safe-bottom) + 42px);
+  overflow-y: auto;
+  background: var(--color-navy);
+  color: var(--color-white);
+  text-align: center;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  min-width: 192px;
+  height: 44px;
+  padding: 0 22px 0 14px;
+  border-radius: 22px;
+  background: var(--color-navy-2);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.picture {
+  margin-top: 75.3px;
+}
+
+.headline {
+  margin-top: 46px;
+  font-size: 34px;
+  line-height: 50px;
+  font-weight: 700;
+}
+
+.sub {
+  margin-top: 38px;
+  font-size: 22px;
+  line-height: 34px;
+  color: var(--color-navy-sub);
+}
+
+.info {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 64px;
+  margin-top: auto;
+  padding: 8px 12px 10px;
+  border-radius: var(--radius-card);
+  background: var(--color-navy-2);
+  font-size: 19px;
+  font-weight: 700;
+}

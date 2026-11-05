@@ -1,0 +1,75 @@
+/* H-04：紺の画面。きらきら・光・主人公・レベルの変化（場面 393×518）＋メッセージのまど 355×134 */
+.titleWrap,
+.changeWrap {
+  width: 393px;
+  text-align: center;
+}
+
+.title {
+  font-family: var(--font-dot);
+  font-size: 46px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--color-gold);
+}
+
+.glow,
+.glowInner {
+  display: block;
+  border-radius: 50%;
+}
+.glow {
+  width: 208px;
+  height: 208px;
+  background: var(--color-navy-2);
+}
+.glowInner {
+  width: 168px;
+  height: 168px;
+  background: var(--color-navy-4);
+}
+
+/* 「レベル 12 → 13」：下の線をそろえる */
+.change {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--font-dot);
+  line-height: 1.45;
+  white-space: nowrap;
+}
+.changeLabel {
+  font-size: 24px;
+  color: var(--color-navy-sub);
+}
+.changeFrom {
+  margin-left: 10px;
+  font-size: 36px;
+  color: var(--color-white);
+}
+.changeArrow {
+  margin-left: 14px;
+  font-size: 30px;
+  color: var(--color-gold);
+}
+.changeTo {
+  margin-left: 14px;
+  font-size: 52px;
+  color: var(--color-gold);
+}
+
+.message {
+  margin: 9px -1px 0;
+  padding: 24px 20px 14.5px 23px;
+}
+.messageMain {
+  font-size: var(--fs-item-title);
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--color-white);
+}
+.messageSub {
+  margin-top: 10.4px;
+  font-size: 19px;
+  line-height: 28px;
+  color: var(--color-navy-sub);
+}
