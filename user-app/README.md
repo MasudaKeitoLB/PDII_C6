@@ -22,6 +22,7 @@ npm run dev
 | `npm run typecheck` | 型のチェック |
 | `npm run build` | 本番用のビルド（`dist/`） |
 | `npm run build:demo` | デモURL用の1ファイル版（`artifact/hoho-demo.html`） |
+| `npm run e2e` | 全ボタンの動作テスト（`e2e/buttons.e2e.mjs`）。先に `npm run dev` で開発サーバーを起動しておく。入っている Chrome を使う（Edge は `E2E_CHANNEL=msedge`、別のアドレスは `BASE=…`） |
 
 ## デモの使い方（確認用パネル）
 
