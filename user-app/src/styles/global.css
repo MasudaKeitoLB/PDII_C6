@@ -63,6 +63,18 @@ p {
   outline-offset: 3px;
 }
 
+/* スマホの画面（デモの枠・せまい画面で開いたとき）では、スクロールバーで 中身の幅を へらさない（スマホと同じく 重ねて出す扱い）。
+   Windows のパソコンでは スクロールバーが 15px の幅をとり、右の余白だけ広がって 左右が そろわなくなるため */
+[data-frame='phone'] *,
+[data-screen='phone'] * {
+  scrollbar-width: none;
+}
+
+[data-frame='phone'] *::-webkit-scrollbar,
+[data-screen='phone'] *::-webkit-scrollbar {
+  display: none;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

@@ -270,9 +270,10 @@
 .targetButton {
   display: grid;
   place-items: center;
-  width: calc(100% + 50px);
+  /* カードのふちから 左右とも 17px（Figma M-03：画面の端から 37px） */
+  width: calc(100% + 54px);
   height: 54px;
-  margin: 10px 0 0 -50px;
+  margin: 10px 0 0 -53px;
   padding-bottom: 3px;
   border-radius: var(--radius-control);
   font-size: 20px;

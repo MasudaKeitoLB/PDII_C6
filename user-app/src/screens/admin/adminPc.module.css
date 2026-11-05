@@ -177,8 +177,9 @@
   overflow: auto;
   outline: none;
 }
+/* 下の余白は Figma の AP-03 と同じ 30px（40px だと 1024 の画面に収まらず、スクロールバーで 右の余白だけ広がる） */
 .content {
-  padding: 0 40px 40px;
+  padding: 0 40px 30px;
 }
 
 /* 上の帯：高さ92、下に 2px の線 */

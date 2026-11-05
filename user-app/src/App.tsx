@@ -198,7 +198,7 @@ export function App() {
 
   if (!wide) {
     return (
-      <main className={pc ? styles.pcPage : styles.phone}>
+      <main className={pc ? styles.pcPage : styles.phone} data-screen={pc ? undefined : 'phone'}>
         <ScreenStack locked={locked} />
       </main>
     );
