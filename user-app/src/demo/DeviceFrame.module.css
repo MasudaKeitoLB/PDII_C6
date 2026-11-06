@@ -36,6 +36,10 @@
   position: absolute;
 }
 
+.light .time {
+  color: var(--color-white);
+}
+
 .time {
   left: 38px;
   top: 20px;
@@ -74,4 +78,21 @@
   top: 839px;
   z-index: 50;
   pointer-events: none;
+}
+
+/* 管理者画面 PC版：1440×1024 */
+.pc {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--color-white);
+  box-shadow:
+    0 0 0 1px rgb(30 27 24 / 0.18),
+    0 24px 60px rgb(30 27 24 / 0.28);
+  /* PC では ステータスバーの分を あけない */
+  --safe-top: 0px;
+  --safe-bottom: 0px;
 }

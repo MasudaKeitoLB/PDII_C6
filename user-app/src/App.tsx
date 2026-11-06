@@ -3,10 +3,12 @@ import { DemoPanel } from './demo/DemoPanel';
 import { DeviceFrame } from './demo/DeviceFrame';
 import { useAppState } from './flow/AppState';
 import { ALL_ROUTES, type RouteId } from './flow/routes';
-import { HomePlaceholder } from './screens/HomePlaceholder';
+import { HomeScreen } from './screens/app/HomeScreen';
 import { LoginBirthdayScreen } from './screens/login/LoginBirthdayScreen';
 import { LoginLetterScreen } from './screens/login/LoginLetterScreen';
 import { LoginNameScreen } from './screens/login/LoginNameScreen';
+import { StaffPinScreen } from './screens/login/StaffPinScreen';
+import { StaffHomePlaceholder } from './screens/staffHomePlaceholder.tsx';
 import { BirthdayScreen } from './screens/register/BirthdayScreen';
 import { HeightScreen, WeightScreen } from './screens/register/BodyScreens';
 import { GenderScreen } from './screens/register/GenderScreen';
@@ -73,8 +75,12 @@ function CurrentScreen() {
       return <LoginBirthdayScreen />;
     case 'login-letter':
       return useLoginLetter ? <LoginLetterScreen /> : <LoginBirthdayScreen />;
+    case 'staff-pin':
+      return <StaffPinScreen />;
+    case 'staff-home':
+      return <StaffHomePlaceholder />;
     case 'home':
-      return user ? <HomePlaceholder user={user} /> : <StartScreen />;
+      return user ? <HomeScreen/>: <StartScreen />;
   }
 }
 

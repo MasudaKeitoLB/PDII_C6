@@ -1,0 +1,21 @@
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 196px var(--gutter) 24px;
+  overflow-y: auto;
+  background: var(--color-dim);
+}
+
+/* 353×462、ふち2.5px、角丸24 */
+.dialog {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px 18px 24px;
+  border: var(--border-ink) solid var(--color-sumi);
+  border-radius: 24px;
+  background: var(--color-white);
+}

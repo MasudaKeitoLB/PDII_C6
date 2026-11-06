@@ -1,0 +1,176 @@
+/*
+ * 歩数の推移のグラフ（AM-03 353幅・AP-03 1112幅）。台の ふち2px の内側に置く。
+ * スマホ：目盛りの線 x=64〜295（台の左から）、0の線〜いちばん上の目盛り 145.7px。
+ * PC：x=100〜1012、188.6px。
+ */
+
+.chart {
+  --plot-left: 62px;
+  --plot-right: 56px;
+  --plot-height: 145.7px;
+  --bar-width: 22px;
+  position: relative;
+}
+.pc {
+  --plot-left: 98px;
+  --plot-right: 98px;
+  --plot-height: 188.6px;
+  --bar-width: 56px;
+}
+.month {
+  --bar-width: 60%;
+}
+
+.plot {
+  position: relative;
+  height: var(--plot-height);
+  margin: 0 var(--plot-right) 0 var(--plot-left);
+}
+
+/* 目盛りの線（1px）と 0の線（2px） */
+.grid,
+.zero {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+}
+.grid {
+  border-top: 1px solid var(--color-line);
+  transform: translateY(0.5px);
+}
+.zero {
+  z-index: 2;
+  border-top: 2px solid var(--color-sumi);
+  transform: translateY(1px);
+}
+.tick {
+  position: absolute;
+  right: calc(100% + 10px);
+  top: -7.5px;
+  font-size: 13px;
+  line-height: 13px;
+  color: var(--color-sumi-soft);
+  white-space: nowrap;
+}
+.zero .tick {
+  top: -8.5px;
+}
+.pc .tick {
+  top: -8px;
+  font-size: 14px;
+  line-height: 14px;
+}
+.pc .zero .tick {
+  top: -9px;
+}
+
+.bars {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+}
+.column {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+}
+.bar {
+  position: relative;
+  width: var(--bar-width);
+  background: var(--color-bar);
+  border-radius: 2px 2px 0 0;
+}
+.today {
+  background: var(--color-green);
+  outline: 2px solid var(--color-sumi);
+  outline-offset: -2px;
+  border-radius: 3px 3px 0 0;
+}
+.month .bar {
+  border-radius: 1px 1px 0 0;
+}
+.month .today {
+  outline-width: 1.5px;
+  outline-offset: -1.5px;
+}
+
+/* PC の1週間：棒の上の数（白い台 43.6×20） */
+.value {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  min-width: 43.6px;
+  padding: 3px 1px;
+  transform: translateX(-50%);
+  border-radius: 10px;
+  background: var(--color-white);
+  font-size: 14px;
+  line-height: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-sumi);
+  white-space: nowrap;
+}
+
+/* 目標のライン：朱の点線（6px ずつ）。右に「目標 5,000」 */
+.goalLine {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: -4px;
+  height: 2px;
+  transform: translateY(1px);
+  background: repeating-linear-gradient(to right, var(--color-vermilion) 0 6px, transparent 6px 11px);
+  pointer-events: none;
+}
+.goalLabel {
+  position: absolute;
+  left: calc(100% + 4px);
+  top: -18px;
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 700;
+  color: var(--color-vermilion);
+  white-space: nowrap;
+}
+
+/* 下の日付 */
+.labels {
+  display: grid;
+  grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+  margin: 9px var(--plot-right) 0 var(--plot-left);
+}
+.label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-self: center;
+  white-space: nowrap;
+}
+.weekday {
+  font-size: 15px;
+  line-height: 15px;
+  color: var(--color-sumi-soft);
+}
+.date {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 14px;
+  color: var(--color-hint);
+  white-space: pre;
+}
+/* 今日は 曜日だけ 緑（Figma の「金」） */
+.labelToday .weekday {
+  color: var(--color-green);
+  font-weight: 700;
+}
+.labelMonth.labelToday .date {
+  color: var(--color-green);
+}
+.labelMonth .weekday {
+  font-size: 14px;
+  line-height: 15px;
+}
