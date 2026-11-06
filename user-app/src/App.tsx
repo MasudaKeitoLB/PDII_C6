@@ -23,6 +23,8 @@ import { StepCheckScreen } from './screens/check/StepCheckScreen';
 import { LoginBirthdayScreen } from './screens/login/LoginBirthdayScreen';
 import { LoginLetterScreen } from './screens/login/LoginLetterScreen';
 import { LoginNameScreen } from './screens/login/LoginNameScreen';
+import { StaffPinScreen } from './screens/login/StaffPinScreen';
+import { StaffHomePlaceholder } from './screens/staffHomePlaceholder';
 import { BirthdayScreen } from './screens/register/BirthdayScreen';
 import { HeightScreen, WeightScreen } from './screens/register/BodyScreens';
 import { GenderScreen } from './screens/register/GenderScreen';
@@ -65,7 +67,7 @@ function useWideLayout() {
 }
 
 function CurrentScreen() {
-  const { route, user, admin, useLoginLetter } = useAppState();
+  const { route, user, admin, loginDraft, staffAuthenticated, useLoginLetter } = useAppState();
   const group = routeInfo(route).group;
 
   // ログインが必要な画面：利用者アプリは はじめの画面、管理者画面は ログインの画面を出す
@@ -104,6 +106,10 @@ function CurrentScreen() {
       return <LoginBirthdayScreen />;
     case 'login-letter':
       return useLoginLetter ? <LoginLetterScreen /> : <LoginBirthdayScreen />;
+    case 'staff-pin':
+      return loginDraft.name ? <StaffPinScreen /> : <StartScreen />;
+    case 'staff-home':
+      return staffAuthenticated ? <StaffHomePlaceholder /> : <StartScreen />;
     case 'home':
       return <HomeScreen />;
     case 'adventure-result':

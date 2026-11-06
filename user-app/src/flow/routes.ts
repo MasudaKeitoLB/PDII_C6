@@ -18,6 +18,8 @@ export type RouteId =
   | 'login-name' // L-01
   | 'login-birthday' // L-02
   | 'login-letter' // L-03
+  | 'staff-pin'
+  | 'staff-home'
   // 4 ホームと冒険（H-02 歩きスマホ防止は 画面に重ねて出す）
   | 'home' // H-01・H-01b
   | 'adventure-result' // H-03
@@ -72,6 +74,8 @@ export const ALL_ROUTES: RouteInfo[] = [
   { id: 'login-name', code: 'L-01', name: 'ログイン① お名前', group: 'login' },
   { id: 'login-birthday', code: 'L-02', name: 'ログイン② 誕生日', group: 'login' },
   { id: 'login-letter', code: 'L-03', name: 'ログイン③ 合言葉の文字', group: 'login' },
+  { id: 'staff-pin', code: 'M-15', name: '管理者側ログイン 暗証番号', group: 'login' },
+  { id: 'staff-home', code: 'M-15', name: '管理者画面（仮）', group: 'login' },
   { id: 'home', code: 'H-01', name: 'ホーム（冒険）', group: 'app' },
   { id: 'adventure-result', code: 'H-03', name: '冒険の成果', group: 'app' },
   { id: 'level-up', code: 'H-04', name: 'レベルアップ', group: 'app' },

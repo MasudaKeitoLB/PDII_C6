@@ -71,6 +71,8 @@ interface AppState {
   loginDraft: LoginDraft;
   updateLogin: (patch: Partial<LoginDraft>) => void;
   resetLogin: () => void;
+  staffAuthenticated: boolean;
+  setStaffAuthenticated: (value: boolean) => void;
   /** この端末でログインしている利用者 */
   user: AppUser | null;
   /** 管理者画面にログインしている アカウント */
@@ -132,6 +134,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [route, setRoute] = useState<RouteId>(() => routeFromHash(getStore().sessionUserId ? 'home' : 'start'));
   const [registration, setRegistration] = useState<RegistrationDraft>(restoreDraft);
   const [loginDraft, setLoginDraft] = useState<LoginDraft>(EMPTY_LOGIN);
+  const [staffAuthenticated, setStaffAuthenticated] = useState(false);
   const [useLoginLetter, setUseLoginLetterState] = useState<boolean>(() => readJson<unknown>(LETTER_SETTING_KEY, true) !== false);
   const [adminUserId, setAdminUserIdState] = useState<string | null>(() => {
     const saved = readJson<unknown>(ADMIN_USER_KEY, null);
@@ -361,6 +364,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       loginDraft,
       updateLogin,
       resetLogin,
+      staffAuthenticated,
+      setStaffAuthenticated,
       user,
       admin,
       adminUserId,
@@ -376,7 +381,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       registerOrder: registerSteps(useLoginLetter),
       loginOrder: loginSteps(useLoginLetter),
     }),
-    [route, navigate, registration, updateRegistration, resetRegistration, loginDraft, updateLogin, resetLogin, user, admin, adminUserId, setAdminUserId, walk, startWalking, stopWalking, walkDemoSteps, motionAccess, allowMotion, useLoginLetter, setUseLoginLetter],
+    [route, navigate, registration, updateRegistration, resetRegistration, loginDraft, updateLogin, resetLogin, staffAuthenticated, user, admin, adminUserId, setAdminUserId, walk, startWalking, stopWalking, walkDemoSteps, motionAccess, allowMotion, useLoginLetter, setUseLoginLetter],
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
