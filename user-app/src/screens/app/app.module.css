@@ -114,6 +114,21 @@
   color: var(--color-white);
 }
 
+/* 歩数を数える準備（iPhone で まだ許可していないとき） */
+.motionNotice {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 18px;
+  border: var(--border-line) solid var(--color-gold-line);
+  border-radius: 19px;
+  background: var(--color-gold-pale);
+  font-size: var(--fs-note);
+  line-height: var(--lh-note);
+  color: var(--color-sumi);
+}
+
 /* 今日の歩数の台：353×274（とても大きい 353×306） */
 .todayCard {
   --head-fs: 20px;

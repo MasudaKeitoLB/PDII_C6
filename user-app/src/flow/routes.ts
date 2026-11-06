@@ -43,9 +43,11 @@ export type RouteId =
   // 8 管理者画面：PC版
   | 'admin-pc-login' // AP-01
   | 'admin-pc-list' // AP-02
-  | 'admin-pc-user'; // AP-03
+  | 'admin-pc-user' // AP-03
+  // 試作の確認（チーム用。利用者の画面からは 入口を出さない：N-06）
+  | 'check-steps'; // T-01 歩数の精度（N-17・15章）
 
-export type RouteGroup = 'register' | 'login' | 'app' | 'admin' | 'admin-pc';
+export type RouteGroup = 'register' | 'login' | 'app' | 'admin' | 'admin-pc' | 'check';
 
 export interface RouteInfo {
   id: RouteId;
@@ -91,6 +93,7 @@ export const ALL_ROUTES: RouteInfo[] = [
   { id: 'admin-pc-login', code: 'AP-01', name: '管理者ログイン（PC）', group: 'admin-pc' },
   { id: 'admin-pc-list', code: 'AP-02', name: '利用者の一覧（PC）', group: 'admin-pc' },
   { id: 'admin-pc-user', code: 'AP-03', name: '測定結果（PC）', group: 'admin-pc' },
+  { id: 'check-steps', code: 'T-01', name: '歩数の精度を確かめる（チーム用）', group: 'check' },
 ];
 
 export function routeInfo(id: RouteId): RouteInfo {

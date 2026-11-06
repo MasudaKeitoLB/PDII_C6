@@ -1,10 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { findAdmin } from '../lib/admin';
 import { dayKey, now } from '../lib/dates';
+import { checkMotionAccess, requestSensorPermissions, type MotionAccess } from '../lib/permissions';
 import { readJson, writeJson } from '../lib/storage';
 import { ensureSampleData, findUser, getStore, recordSteps, useStore } from '../lib/store';
 import type { AdminAccount, AppUser, Birthday, Gender, ShareConsent } from '../lib/types';
 import { isRouteId, loginSteps, registerSteps, routeInfo, type RouteId } from './routes';
+import { useStepSensor } from './useStepSensor';
 
 /** 登録の途中の入力。途中で閉じても 続きから入力できるよう 端末に残す */
 export interface RegistrationDraft {
@@ -53,6 +55,10 @@ const ADMIN_USER_KEY = 'hoho.admin.selectedUser';
 
 /** 止まってから 使えるようになるまで（N-10：試作で決める） */
 export const UNLOCK_DELAY_MS = 2500;
+/** 体の動きで 歩数が これだけ ふえなければ 止まったとみなす（N-10：試作で決める） */
+export const STOP_AFTER_MS = 2000;
+/** 数えた歩数を まとめて記録する間隔（書くたびに 端末へ保存するので まとめる。N-18） */
+export const FLUSH_INTERVAL_MS = 2000;
 /** デモで歩いているときに 0.5秒ごとに ふえる歩数 */
 const DEMO_STEPS_PER_TICK = 40;
 
@@ -73,10 +79,15 @@ interface AppState {
   adminUserId: string | null;
   setAdminUserId: (id: string | null) => void;
   walk: WalkState;
+  /** デモ用：歩きはじめる（0.5秒ごとに 歩数を ふやす） */
   startWalking: () => void;
   stopWalking: () => void;
-  /** デモ用：アプリを閉じている間に 歩いたことにして、開いたときの成果を出す */
-  walkInBackground: (steps: number) => void;
+  /** デモ用：まとめて歩いて 止まったことにして、冒険の成果を出す */
+  walkDemoSteps: (steps: number) => void;
+  /** 体の動きで 歩数を数えられるか（M-03） */
+  motionAccess: MotionAccess;
+  /** ボタンを押したときに 許可を求める（iPhone）。ボタン操作の中で 最初に呼ぶ */
+  allowMotion: () => Promise<MotionAccess>;
   /** L-03「合言葉の文字」を使うか（16章：ローマ字1文字を入れることに決定。デモでは切りかえられる） */
   useLoginLetter: boolean;
   setUseLoginLetter: (value: boolean) => void;
@@ -126,11 +137,21 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     const saved = readJson<unknown>(ADMIN_USER_KEY, null);
     return typeof saved === 'string' ? saved : null;
   });
-  const [walk, setWalk] = useState<WalkState>('idle');
+  const [walk, setWalkState] = useState<WalkState>('idle');
+  /** センサーから呼ばれたときに いまの状態を読むため、state と同じ値を持っておく */
+  const walkRef = useRef<WalkState>('idle');
+  /** いまの歩行が 体の動き（sensor）か、確認パネルのボタン（demo）か */
+  const walkSource = useRef<'sensor' | 'demo' | null>(null);
   const walkTimer = useRef<number | null>(null);
   /** 歩いている（歩数を記録している）利用者 */
   const walkingUserId = useRef<string | null>(null);
   const unlockTimer = useRef<number | null>(null);
+  const stopTimer = useRef<number | null>(null);
+  const flushTimer = useRef<number | null>(null);
+  /** 数えたが まだ記録していない歩数 */
+  const pendingSteps = useRef<{ userId: string | null; steps: number }>({ userId: null, steps: 0 });
+  const [motionAccess, setMotionAccess] = useState<MotionAccess>('checking');
+  const [pageVisible, setPageVisible] = useState(() => document.visibilityState !== 'hidden');
 
   useEffect(() => {
     const onHashChange = () => setRoute(routeFromHash('start'));
@@ -180,38 +201,61 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     writeJson(ADMIN_USER_KEY, id);
   }, []);
 
+  const setWalk = (next: WalkState) => {
+    walkRef.current = next;
+    setWalkState(next);
+  };
+
   const clearWalkTimers = () => {
     if (walkTimer.current !== null) window.clearInterval(walkTimer.current);
     if (unlockTimer.current !== null) window.clearTimeout(unlockTimer.current);
+    if (stopTimer.current !== null) window.clearTimeout(stopTimer.current);
+    if (flushTimer.current !== null) window.clearInterval(flushTimer.current);
     walkTimer.current = null;
     unlockTimer.current = null;
+    stopTimer.current = null;
+    flushTimer.current = null;
   };
+
+  /** 数えた歩数を 記録する（歩いた人に入れる） */
+  const flushSteps = () => {
+    const { userId: id, steps } = pendingSteps.current;
+    pendingSteps.current = { userId: null, steps: 0 };
+    if (id && steps > 0) recordSteps(id, steps, now());
+  };
+
+  /** 立ち止まって開くと、歩いた分の冒険の成果が見られる（M-07）。管理者画面などを見ているときは 画面を かえない */
+  const showResultIfAny = useCallback(() => {
+    const current = findUser(getStore().sessionUserId);
+    const onApp = routeInfo(routeFromHash('start')).group === 'app';
+    if (current?.game.pending && onApp) navigate('adventure-result');
+  }, [navigate]);
 
   const startWalking = useCallback(() => {
     const id = getStore().sessionUserId;
     if (!id) return;
+    flushSteps();
     clearWalkTimers();
+    walkSource.current = 'demo';
     setWalk('walking');
-    // 本実装では スマホのセンサーが 歩いていることを知らせる。デモでは 0.5秒ごとに歩数をふやす
+    // デモでは 0.5秒ごとに歩数をふやす（スマホでは 体の動きで数える）
     walkingUserId.current = id;
     walkTimer.current = window.setInterval(() => recordSteps(id, DEMO_STEPS_PER_TICK, now()), 500);
   }, []);
 
   const stopWalking = useCallback(() => {
+    flushSteps();
     clearWalkTimers();
-    setWalk((w) => (w === 'idle' ? 'idle' : 'stopping'));
+    setWalk(walkRef.current === 'idle' ? 'idle' : 'stopping');
     unlockTimer.current = window.setTimeout(() => {
       unlockTimer.current = null;
+      walkSource.current = null;
       setWalk('idle');
-      // 立ち止まって開くと、歩いた分の冒険の成果が見られる（M-07）。
-      // 確認パネルから 管理者画面などを見ているときは 画面を かえない
-      const current = findUser(getStore().sessionUserId);
-      const onApp = routeInfo(routeFromHash('start')).group === 'app';
-      if (current?.game.pending && onApp) navigate('adventure-result');
+      showResultIfAny();
     }, UNLOCK_DELAY_MS);
-  }, [navigate]);
+  }, [showResultIfAny]);
 
-  const walkInBackground = useCallback(
+  const walkDemoSteps = useCallback(
     (steps: number) => {
       const id = getStore().sessionUserId;
       if (!id) return;
@@ -221,17 +265,91 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [navigate],
   );
 
-  // ログアウトしたときや ほかの人に かわったときは 歩いている状態を やめる（前の人に歩数を入れない）
+  /** 体の動きで 歩数が ふえたとき：歩いている状態にし、まとめて記録し、止まったら ロックを外す（M-03・M-11） */
+  const onSensorSteps = useCallback(
+    (steps: number) => {
+      // 確認パネルのボタンで歩いている間（止まって 使えるようになるまでの間も）は、二重に数えないよう 体の動きの分を捨てる。
+      // デモ（PC で確認する）ための動きなので、スマホで ボタンと体の動きを 同時に使うことは 考えない
+      if (walkSource.current === 'demo') return;
+      const id = getStore().sessionUserId;
+      if (!id) return;
+      if (pendingSteps.current.userId !== null && pendingSteps.current.userId !== id) flushSteps();
+      pendingSteps.current = { userId: id, steps: pendingSteps.current.steps + steps };
+      // 歩いている途中で ほかの人に かわったときも、いまの人の歩行として つづける
+      walkingUserId.current = id;
+      if (walkRef.current !== 'walking') {
+        if (unlockTimer.current !== null) window.clearTimeout(unlockTimer.current);
+        unlockTimer.current = null;
+        walkSource.current = 'sensor';
+        setWalk('walking');
+      }
+      if (flushTimer.current === null) flushTimer.current = window.setInterval(flushSteps, FLUSH_INTERVAL_MS);
+      if (stopTimer.current !== null) window.clearTimeout(stopTimer.current);
+      stopTimer.current = window.setTimeout(() => {
+        stopTimer.current = null;
+        stopWalking();
+      }, STOP_AFTER_MS);
+    },
+    [stopWalking],
+  );
+
+  const allowMotion = useCallback(async () => {
+    const access = await requestSensorPermissions();
+    setMotionAccess(access);
+    return access;
+  }, []);
+
+  // 開いたときに 数えられるかを調べる（iPhone で まだ許可していなければ ボタンを出す）
+  useEffect(() => {
+    let alive = true;
+    void checkMotionAccess().then((access) => {
+      if (alive) setMotionAccess(access);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // 画面が隠れると 値が届かなくなる。数えた分を記録して、すぐに使えるようにもどす
+  useEffect(() => {
+    const onVisibility = () => {
+      const visible = document.visibilityState !== 'hidden';
+      setPageVisible(visible);
+      if (!visible) {
+        flushSteps();
+        clearWalkTimers();
+        walkSource.current = null;
+        if (walkRef.current !== 'idle') setWalk('idle');
+      } else {
+        showResultIfAny();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [showResultIfAny]);
+
+  // ログアウトしたときや ほかの人に かわったときは 歩いている状態を やめる（前の人の歩数は 前の人に入れる）
   const userId = user?.id ?? null;
   useEffect(() => {
     if (walk !== 'idle' && userId !== walkingUserId.current) {
+      flushSteps();
       clearWalkTimers();
       walkingUserId.current = null;
+      walkSource.current = null;
       setWalk('idle');
     }
   }, [userId, walk]);
 
-  useEffect(() => () => clearWalkTimers(), []);
+  // 数えるのは ログインしている間だけ。歩数を確かめる画面（チーム用）は 自分で数えるので ここでは数えない
+  useStepSensor(motionAccess === 'granted' && userId !== null && pageVisible && routeInfo(route).group !== 'check', onSensorSteps);
+
+  useEffect(
+    () => () => {
+      flushSteps();
+      clearWalkTimers();
+    },
+    [],
+  );
 
   const value = useMemo<AppState>(
     () => ({
@@ -250,13 +368,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       walk,
       startWalking,
       stopWalking,
-      walkInBackground,
+      walkDemoSteps,
+      motionAccess,
+      allowMotion,
       useLoginLetter,
       setUseLoginLetter,
       registerOrder: registerSteps(useLoginLetter),
       loginOrder: loginSteps(useLoginLetter),
     }),
-    [route, navigate, registration, updateRegistration, resetRegistration, loginDraft, updateLogin, resetLogin, user, admin, adminUserId, setAdminUserId, walk, startWalking, stopWalking, walkInBackground, useLoginLetter, setUseLoginLetter],
+    [route, navigate, registration, updateRegistration, resetRegistration, loginDraft, updateLogin, resetLogin, user, admin, adminUserId, setAdminUserId, walk, startWalking, stopWalking, walkDemoSteps, motionAccess, allowMotion, useLoginLetter, setUseLoginLetter],
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;

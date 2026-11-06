@@ -7,12 +7,13 @@ import enemyIshikoron from '../../assets/sprite/enemy-ishikoron-small.svg';
 import hero from '../../assets/sprite/hero.svg';
 import pointIcon from '../../assets/icon/point.svg';
 import starIcon from '../../assets/icon/star.svg';
+import { Button } from '../../components/Button';
 import { ExpBar } from '../../components/ExpBar';
 import { FitScene, Place } from '../../components/FitScene';
 import { GameWindow } from '../../components/GameWindow';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Screen } from '../../components/Screen';
-import { useUser } from '../../flow/AppState';
+import { useAppState, useUser } from '../../flow/AppState';
 import { dayKey, formatReceived, now } from '../../lib/dates';
 import { levelProgress, stepsToNextLevel, upcomingEnemy } from '../../lib/game';
 import { formatSteps } from '../../lib/health';
@@ -33,6 +34,7 @@ const ENEMY_SPRITES: Record<EnemyId, { src: string; x: number; width: number; he
  */
 export function HomeScreen() {
   const user = useUser();
+  const { motionAccess, allowMotion } = useAppState();
   const xl = user.textSize === 'xlarge';
   const today = now();
   const todaySteps = user.days[dayKey(today)] ?? 0;
@@ -90,6 +92,26 @@ export function HomeScreen() {
         </FitScene>
       }
     >
+      {/* iPhone で まだ許可していない人・許可しなかった人にだけ、今日の歩数の上に出す（ほかの人には 何も出さない：N-06） */}
+      {motionAccess === 'needs-button' && (
+        <section className={s.motionNotice} aria-label="歩数を数える準備">
+          <p>
+            歩数を 数えるには、下のボタンを 押してください。
+            <br />
+            スマホに出る画面で「許可」を 押します
+          </p>
+          <Button onClick={() => void allowMotion()}>歩数を 数えはじめる</Button>
+        </section>
+      )}
+      {motionAccess === 'denied' && (
+        <section className={s.motionNotice} aria-label="歩数を数える準備">
+          <p>
+            いまは 歩数を 数えられません。
+            <br />
+            スタッフに 声をかけてください
+          </p>
+        </section>
+      )}
       <section className={s.todayCard} aria-label="今日の歩数">
         <div className={s.todayHead}>
           <p className={s.todayTitle}>{reached ? '今日の目標を 達成しました' : '今日の目標まで あと'}</p>

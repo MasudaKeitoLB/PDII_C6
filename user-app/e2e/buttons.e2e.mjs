@@ -235,10 +235,10 @@ await test('16 歩く：歩きスマホ防止が出て、立ち止まると外�
   await page.getByRole('button', { name: /^歩きはじめる/ }).waitFor({ state: 'visible' });
 });
 
-await test('17 アプリを閉じて 2,345歩：冒険の成果 → レベルアップ（12→13）→ ホーム', async () => {
+await test('17 2,345歩 歩いて止まったことにする：冒険の成果 → レベルアップ（12→13）→ ホーム', async () => {
   await reset();
   await enterSample();
-  await page.getByRole('button', { name: /^アプリを閉じて/ }).click();
+  await page.getByRole('button', { name: /^2,345歩 歩いて 止まったことにする/ }).click();
   await waitHash('adventure-result');
   await btn('つづける').click();
   await waitHash('level-up');
@@ -381,6 +381,141 @@ await test('26 見せるのをやめた人は、管理者の一覧から消え�
   assert((await page.getByRole('link', { name: '山田 花子', exact: true }).count()) === 0, '施設の一覧に残っている');
   await enterAdmin('佐藤 恵子', false);
   assert((await page.getByRole('button', { name: /^山田 花子 79歳/ }).count()) === 0, '担当の一覧に残っている');
+});
+
+// ---- 体の動きで 歩数を数える（M-03・M-11）----
+console.log('体の動きで 歩数を数える');
+
+/** スマホを持って steps 歩 歩いたときの 体の動きを、実際の時間に合わせて 1秒に60回 送る */
+const walkMotion = (steps, { hz = 1.8, amp = 3 } = {}) =>
+  page.evaluate(
+    async ({ steps, hz, amp }) => {
+      const rate = 60;
+      const total = Math.round((steps / hz) * rate);
+      const startedAt = performance.now();
+      for (let i = 0; i < total; i++) {
+        const sec = (performance.now() - startedAt) / 1000;
+        const y = 9.8 + amp * Math.sin(2 * Math.PI * hz * sec);
+        window.dispatchEvent(new DeviceMotionEvent('devicemotion', { accelerationIncludingGravity: { x: 0, y, z: 0 }, interval: 1000 / rate }));
+        await new Promise((r) => setTimeout(r, 1000 / rate));
+      }
+    },
+    { steps, hz, amp },
+  );
+/** 手で 2回 ゆらしただけの 動き */
+const shakeMotion = () =>
+  page.evaluate(async () => {
+    const startedAt = performance.now();
+    for (let i = 0; i < 90; i++) {
+      const sec = (performance.now() - startedAt) / 1000;
+      const bump = (at) => 6 * Math.exp(-(((sec - at) / 0.08) ** 2));
+      window.dispatchEvent(new DeviceMotionEvent('devicemotion', { accelerationIncludingGravity: { x: 0, y: 9.8 + bump(0.4) + bump(0.9), z: 0 }, interval: 16 }));
+      await new Promise((r) => setTimeout(r, 1000 / 60));
+    }
+  });
+const setPageHidden = (hidden) =>
+  page.evaluate((h) => {
+    if (h) Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+    else delete document.visibilityState;
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, hidden);
+const todayStatus = () => page.locator('aside').getByText(/山田 花子さん（レベル\d+・今日 [\d,]+歩）/).innerText();
+const todaySteps = async () => Number((await todayStatus()).match(/今日 ([\d,]+)歩/)[1].replace(/,/g, ''));
+
+await test('28 体の動きで歩くと 歩きスマホ防止が出て、止まると外れて 冒険の成果へ。歩数も ふえる', async () => {
+  await reset();
+  await enterSample();
+  const before = await todaySteps();
+  await walkMotion(10);
+  await visible(dialog('歩きスマホ防止'), '歩きスマホ防止の画面');
+  await dialog('歩きスマホ防止').waitFor({ state: 'detached', timeout: 10000 });
+  await waitHash('adventure-result');
+  const added = (await todaySteps()) - before;
+  assert(Math.abs(added - 10) <= 2, `ふえた歩数が ${added}歩`);
+});
+
+await test('29 手で 2回 ゆらしただけでは ロックも出ず、歩数も ふえない', async () => {
+  await reset();
+  await enterSample();
+  const before = await todaySteps();
+  await shakeMotion();
+  await page.waitForTimeout(500);
+  assert((await dialog('歩きスマホ防止').count()) === 0, 'ロックが出た');
+  assert((await todaySteps()) === before, '歩数が ふえた');
+});
+
+await test('30 ログインしていない間に歩いた分は、だれにも入らない', async () => {
+  await reset();
+  const before = await page.evaluate(async () => {
+    const s = await import('/src/lib/store.ts');
+    return s.findUser('s-yamada').days;
+  });
+  await walkMotion(10);
+  await page.waitForTimeout(2500);
+  await enterSample();
+  const after = await page.evaluate(async () => {
+    const s = await import('/src/lib/store.ts');
+    return s.findUser('s-yamada').days;
+  });
+  assert(JSON.stringify(after) === JSON.stringify(before), 'ログインしていない間の歩数が 入った');
+});
+
+await test('31 歩いている途中で 画面が隠れると、すぐに ロックが外れる', async () => {
+  await reset();
+  await enterSample();
+  await walkMotion(8);
+  await visible(dialog('歩きスマホ防止'), '歩きスマホ防止の画面');
+  await setPageHidden(true);
+  await dialog('歩きスマホ防止').waitFor({ state: 'detached', timeout: 1000 });
+  await setPageHidden(false);
+  await waitHash('adventure-result');
+});
+
+await test('32 歩数の精度を確かめる画面（チーム用）：10歩で B が 10±1、記録すると 一覧に出る', async () => {
+  await reset();
+  await go('check-steps');
+  await btn('はじめる').click();
+  await walkMotion(10);
+  await page.waitForTimeout(600);
+  const b = Number(await page.locator('[data-variant="B"]').innerText());
+  assert(Math.abs(b - 10) <= 1, `B が ${b}歩`);
+  await page.getByLabel('実際の歩数').fill('10');
+  await btn('記録する').click();
+  await visible(page.getByRole('cell', { name: '手に持つ' }), '記録の行');
+  await btn('記録を消す').click();
+  await btn('おわる').click();
+});
+
+await test('33 iPhone：まだ許可していないと ホームに案内が出て、ボタンを押すと 許可を求めて 数えはじめる', async () => {
+  const ios = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
+  ios.setDefaultTimeout(TIMEOUT);
+  ios.on('pageerror', (e) => problems.push(`pageerror(iPhone): ${e.message}`));
+  // iPhone の Safari と同じく、ボタン操作の中で呼んだときだけ 許可を求められる（それ以外は NotAllowedError）
+  await ios.addInitScript(() => {
+    window.__motionAsked = 0;
+    DeviceMotionEvent.requestPermission = () => {
+      if (!navigator.userActivation?.isActive) return Promise.reject(new DOMException('ボタン操作が必要', 'NotAllowedError'));
+      window.__motionAsked += 1;
+      return Promise.resolve('granted');
+    };
+  });
+  try {
+    await ios.goto(BASE);
+    await ios.waitForSelector('aside');
+    await ios.evaluate(async () => {
+      const s = await import('/src/lib/store.ts');
+      s.resetAll();
+      s.loginAs('s-yamada');
+      location.hash = 'home';
+    });
+    const allow = ios.getByRole('button', { name: '歩数を 数えはじめる', exact: true });
+    await allow.click();
+    await allow.waitFor({ state: 'detached' });
+    assert((await ios.evaluate(() => window.__motionAsked)) === 1, 'ボタン操作の中で 許可を求めていない');
+    await ios.locator('aside').getByText('体の動き：数えられます').first().waitFor({ state: 'visible' });
+  } finally {
+    await ios.close();
+  }
 });
 
 // ---- まとめ ----

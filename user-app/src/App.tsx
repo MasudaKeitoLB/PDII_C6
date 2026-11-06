@@ -19,6 +19,7 @@ import { RecordsScreen } from './screens/app/RecordsScreen';
 import { ShareTargetsScreen } from './screens/app/ShareTargetsScreen';
 import { TextSizeScreen } from './screens/app/TextSizeScreen';
 import { WalkingLock } from './screens/app/WalkingLock';
+import { StepCheckScreen } from './screens/check/StepCheckScreen';
 import { LoginBirthdayScreen } from './screens/login/LoginBirthdayScreen';
 import { LoginLetterScreen } from './screens/login/LoginLetterScreen';
 import { LoginNameScreen } from './screens/login/LoginNameScreen';
@@ -145,6 +146,8 @@ function CurrentScreen() {
       return <AdminPcListScreen account={admin!} />;
     case 'admin-pc-user':
       return <AdminPcUserScreen />;
+    case 'check-steps':
+      return <StepCheckScreen />;
   }
 }
 

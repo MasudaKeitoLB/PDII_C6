@@ -1,4 +1,5 @@
-import { UNLOCK_DELAY_MS, useAppState } from '../flow/AppState';
+import { STOP_AFTER_MS, UNLOCK_DELAY_MS, useAppState } from '../flow/AppState';
+import type { MotionAccess } from '../lib/permissions';
 import { ALL_ROUTES, routeInfo, type RouteId } from '../flow/routes';
 import { ADMIN_ACCOUNTS, canSeeUser, findAdmin, ROLE_LABEL } from '../lib/admin';
 import { dayKey, now } from '../lib/dates';
@@ -12,7 +13,16 @@ export const DEMO_PANEL_RESERVE = 300 + 40 + 32;
 /** サンプルの利用者：Figma の 利用者アプリの画面と同じ人 */
 const SAMPLE_USER_ID = 's-yamada';
 /** 「歩いたことにする」歩数：Figma の H-03（2,345歩・3体）と H-04（レベル12→13）に なる */
-const BACKGROUND_STEPS = 2345;
+const DEMO_WALK_STEPS = 2345;
+
+/** 体の動きで 歩数を数えられるか（スマホでは 体の動きで、PC では 下のボタンで 歩く） */
+const MOTION_LABEL: Record<MotionAccess, string> = {
+  checking: '調べています',
+  granted: '数えられます（PC では 値が届きません）',
+  'needs-button': 'ホームで 許可が必要です（iPhone）',
+  denied: '許可されていません',
+  unsupported: 'このブラウザでは 数えられません',
+};
 
 const GROUPS: { title: string; ids: RouteId[] }[] = [
   {
@@ -52,6 +62,7 @@ const GROUPS: { title: string; ids: RouteId[] }[] = [
   },
   { title: '管理者画面（スマホ）', ids: ['admin-login', 'admin-list', 'admin-user'] },
   { title: '管理者画面（PC）', ids: ['admin-pc-login', 'admin-pc-list', 'admin-pc-user'] },
+  { title: '試作の確認（チーム用）', ids: ['check-steps'] },
 ];
 
 const LETTER_ROUTES: RouteId[] = ['register-letter', 'login-letter'];
@@ -69,7 +80,8 @@ export function DemoPanel() {
     walk,
     startWalking,
     stopWalking,
-    walkInBackground,
+    walkDemoSteps,
+    motionAccess,
     useLoginLetter,
     setUseLoginLetter,
     resetRegistration,
@@ -129,6 +141,9 @@ export function DemoPanel() {
         <p className={styles.status}>
           管理者画面：{admin ? <strong>{`${admin.name}（${ROLE_LABEL[admin.role]}）`}</strong> : 'ログインしていません'}
         </p>
+        <p className={styles.status}>
+          体の動き：<strong>{MOTION_LABEL[motionAccess]}</strong>
+        </p>
       </section>
 
       <section className={styles.section}>
@@ -153,8 +168,8 @@ export function DemoPanel() {
               {walk === 'walking' ? '立ち止まる' : 'もうすぐ 使えるようになります…'}
             </button>
           )}
-          <button type="button" className={styles.action} disabled={!user || walk !== 'idle'} onClick={() => walkInBackground(BACKGROUND_STEPS)}>
-            アプリを閉じて {formatSteps(BACKGROUND_STEPS)}歩 歩いたことにする（H-03・H-04）
+          <button type="button" className={styles.action} disabled={!user || walk !== 'idle'} onClick={() => walkDemoSteps(DEMO_WALK_STEPS)}>
+            {formatSteps(DEMO_WALK_STEPS)}歩 歩いて 止まったことにする（H-03・H-04）
           </button>
           {user && !user.sample && (
             <button type="button" className={styles.action} onClick={() => fillSampleHistory(user.id)}>
@@ -163,7 +178,7 @@ export function DemoPanel() {
           )}
         </div>
         <p className={styles.note}>
-          歩いている間は 0.5秒ごとに歩数が ふえます。止まって {UNLOCK_DELAY_MS / 1000}秒たつと 使えるようになり、冒険の成果が出ます。
+          スマホでは 体の動きで歩数を数え、{STOP_AFTER_MS / 1000}秒 ふえなければ 止まったとみなします。PC では このボタンで歩き、0.5秒ごとに歩数が ふえます。止まって {UNLOCK_DELAY_MS / 1000}秒たつと 使えるようになり、冒険の成果が出ます。
         </p>
       </section>
 
