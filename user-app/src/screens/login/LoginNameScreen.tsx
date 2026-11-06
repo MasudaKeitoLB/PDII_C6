@@ -11,7 +11,7 @@ import s from '../screens.module.css';
  * 「おかえりなさい」で 前と同じ手順だと分かるように。入力の形は 登録と同じ。
  */
 export function LoginNameScreen() {
-  const { navigate, loginDraft, updateLogin, loginOrder, updateStaffPin } = useAppState();
+  const { navigate, loginDraft, updateLogin, loginOrder } = useAppState();
   const step = useStep('login-name', loginOrder, 'start', 'login-birthday');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -25,7 +25,6 @@ export function LoginNameScreen() {
     setBusy(true);
     try {
       if (await isStaffName(loginDraft.name)) {
-        updateStaffPin('');
         navigate('staff-pin');
       } else {
         navigate(step.next);
@@ -44,7 +43,7 @@ export function LoginNameScreen() {
       onBack={() => navigate('start')}
       progress={step.progress}
       footer={
-          <Button withArrow onClick={() => void next()} disabled={busy}>
+        <Button withArrow onClick={() => void next()} disabled={busy}>
           {busy ? '確認中…' : 'つぎへ'}
         </Button>
       }

@@ -8,7 +8,8 @@ import s from '../screens.module.css';
 import fieldStyles from '../../components/TextField.module.css';
 
 export function StaffPinScreen() {
-  const { loginDraft, staffPin, updateStaffPin, resetStaffPin, setStaffAuthenticated, navigate } = useAppState();
+  const { loginDraft, setStaffAuthenticated, navigate } = useAppState();
+  const [staffPin, updateStaffPin] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,7 +23,7 @@ export function StaffPinScreen() {
     try {
       if (await authenticateStaff(loginDraft.name, staffPin)) {
         setStaffAuthenticated(true);
-        resetStaffPin();
+        updateStaffPin('');
         navigate('staff-home');
       } else {
         setError('ログインできませんでした。お名前と暗証番号を確認してください');
@@ -35,7 +36,7 @@ export function StaffPinScreen() {
   };
 
   return (
-    <Screen title="管理者側ログイン 暗証番号" onBack={() => { resetStaffPin(); navigate('login-name'); }} footer={<Button withArrow onClick={submit} disabled={busy}>{busy ? '確認中…' : 'ログイン'}</Button>}>
+    <Screen title="管理者側ログイン 暗証番号" onBack={() => navigate('login-name')} footer={<Button withArrow onClick={submit} disabled={busy}>{busy ? '確認中…' : 'ログイン'}</Button>}>
       <Heading>スタッフの<br />暗証番号を 入れてください</Heading>
       <Lead>運営者から発行された 暗証番号です</Lead>
       <div className={s.loginNameField}>
