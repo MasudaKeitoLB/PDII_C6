@@ -1,0 +1,10 @@
+/* arrow-right-white.svg（14×24、本体 10×20）を 形はそのまま 色をかえて出す */
+.chevron {
+  display: inline-block;
+  flex: none;
+  width: calc(14px * var(--chevron-scale));
+  height: calc(24px * var(--chevron-scale));
+  background: var(--chevron-color);
+  -webkit-mask: var(--chevron-url) center / contain no-repeat;
+  mask: var(--chevron-url) center / contain no-repeat;
+}

@@ -49,6 +49,11 @@ interface AppState {
   updateRegistration: (patch: Partial<RegistrationDraft>) => void;
   resetRegistration: () => void;
   loginDraft: LoginDraft;
+  staffPin: string;
+  staffAuthenticated: boolean;
+  setStaffAuthenticated: (value: boolean) => void;
+  updateStaffPin: (pin: string) => void;
+  resetStaffPin: () => void;
   updateLogin: (patch: Partial<LoginDraft>) => void;
   resetLogin: () => void;
   user: RegisteredUser | null;
@@ -93,16 +98,24 @@ function routeFromHash(fallback: RouteId): RouteId {
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<RegisteredUser | null>(() => currentUser());
-  const [route, setRoute] = useState<RouteId>(() => routeFromHash(user ? 'home' : 'start'));
+  const [staffAuthenticated, setStaffAuthenticated] = useState(false);
+  const [route, setRoute] = useState<RouteId>(() => {
+    const initial = routeFromHash(user ? 'home' : 'start');
+    return initial === 'staff-home' || initial === 'staff-pin' ? (user ? 'home' : 'start') : initial;
+  });
   const [registration, setRegistration] = useState<RegistrationDraft>(restoreDraft);
   const [loginDraft, setLoginDraft] = useState<LoginDraft>(EMPTY_LOGIN);
+  const [staffPin, setStaffPin] = useState('');
   const [useLoginLetter, setUseLoginLetterState] = useState<boolean>(() => readJson<unknown>(LETTER_SETTING_KEY, true) !== false);
 
   useEffect(() => {
-    const onHashChange = () => setRoute(routeFromHash('start'));
+    const onHashChange = () => {
+      const requested = routeFromHash('start');
+      setRoute(requested === 'staff-home' && !staffAuthenticated ? 'start' : requested);
+    };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
-  }, []);
+  }, [staffAuthenticated]);
 
   const navigate = useCallback((next: RouteId) => {
     if (window.location.hash === `#${next}`) return;
@@ -124,6 +137,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const updateLogin = useCallback((patch: Partial<LoginDraft>) => setLoginDraft((prev) => ({ ...prev, ...patch })), []);
   const resetLogin = useCallback(() => setLoginDraft(EMPTY_LOGIN), []);
+  const updateStaffPin = useCallback((pin: string) => setStaffPin(pin), []);
+  const resetStaffPin = useCallback(() => setStaffPin(''), []);
 
   const setUseLoginLetter = useCallback((value: boolean) => {
     setUseLoginLetterState(value);
@@ -138,6 +153,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       updateRegistration,
       resetRegistration,
       loginDraft,
+      staffPin,
+      staffAuthenticated,
+      setStaffAuthenticated,
+      updateStaffPin,
+      resetStaffPin,
       updateLogin,
       resetLogin,
       user,
@@ -147,7 +167,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       registerOrder: registerSteps(useLoginLetter),
       loginOrder: loginSteps(useLoginLetter),
     }),
-    [route, navigate, registration, updateRegistration, resetRegistration, loginDraft, updateLogin, resetLogin, user, useLoginLetter, setUseLoginLetter],
+    [route, navigate, registration, updateRegistration, resetRegistration, loginDraft, updateLogin, resetLogin, staffPin, staffAuthenticated, setStaffAuthenticated, updateStaffPin, resetStaffPin, user, useLoginLetter, setUseLoginLetter],
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;

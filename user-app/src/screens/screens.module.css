@@ -66,50 +66,6 @@
 }
 
 /* U-07 目標歩数 */
-.goalValue {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 104px;
-  margin-top: 18px;
-  padding-bottom: 24px;
-  border: var(--border-line) solid var(--color-line);
-  border-radius: var(--radius-box);
-  background: var(--color-white);
-  white-space: nowrap;
-}
-.goalNumber {
-  font-size: 56px;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.goalUnit {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--color-sumi-soft);
-}
-.goalButtons {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 14px;
-}
-.goalButton {
-  height: 68px;
-  padding-bottom: 5px;
-  border-radius: var(--radius-control);
-  font-size: var(--fs-button);
-  font-weight: 700;
-}
-.goalButton:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-.guide {
-  margin-top: 30px;
-  padding: 14px 16px 16px 16px;
-}
 .goalNote {
   margin-top: 11.5px;
 }

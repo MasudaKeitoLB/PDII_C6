@@ -1,15 +1,19 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import type { TabId } from '../flow/routes';
 import { BackButton } from './BackButton';
 import { StepProgress } from './StepProgress';
+import { TabBar } from './TabBar';
 import styles from './Screen.module.css';
 
-export type ScreenBackground = 'white' | 'kinari' | 'paper';
+export type ScreenBackground = 'white' | 'kinari' | 'paper' | 'navy';
 
 interface ScreenProps {
   /** 画面の名前（読み上げ用）。例：「登録① お名前」 */
   title: string;
   background?: ScreenBackground;
   onBack?: () => void;
+  /** 戻るボタンの文字（「一覧」など 行き先を書いてもよい） */
+  backLabel?: string;
   progress?: { current: number; total: number };
   /** 画面のいちばん上から始まる絵（はじめの画面・準備ができました） */
   scene?: ReactNode;
@@ -19,6 +23,8 @@ interface ScreenProps {
   footerGap?: number;
   /** いちばん下のボタンと 画面の下（ホームバー）との すきま */
   footerBottom?: number;
+  /** 下のタブを出す（冒険・記録・わたし） */
+  tab?: TabId;
   /** 画面全体に重ねる部品（大きな一覧など） */
   overlay?: ReactNode;
   children: ReactNode;
@@ -28,10 +34,11 @@ const BACKGROUNDS: Record<ScreenBackground, string> = {
   white: 'var(--color-white)',
   kinari: 'var(--color-kinari)',
   paper: 'var(--color-paper)',
+  navy: 'var(--color-navy)',
 };
 
 /** 1画面1アクション（N-04）の画面のわく。主ボタンはいつも画面の下（U-01 注記） */
-export function Screen({ title, background = 'white', onBack, progress, scene, footer, footerGap, footerBottom, overlay, children }: ScreenProps) {
+export function Screen({ title, background = 'white', onBack, backLabel, progress, scene, footer, footerGap, footerBottom, tab, overlay, children }: ScreenProps) {
   const hasHeader = Boolean(onBack || progress);
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -53,7 +60,7 @@ export function Screen({ title, background = 'white', onBack, progress, scene, f
         {scene}
         {hasHeader && (
           <header className={styles.header}>
-            {onBack && <BackButton onClick={onBack} />}
+            {onBack && <BackButton onClick={onBack} label={backLabel} />}
             {progress && <StepProgress current={progress.current} total={progress.total} />}
           </header>
         )}
@@ -67,6 +74,7 @@ export function Screen({ title, background = 'white', onBack, progress, scene, f
           {footer}
         </footer>
       )}
+      {tab && <TabBar active={tab} />}
       {overlay}
     </section>
   );

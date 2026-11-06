@@ -1,0 +1,59 @@
+/* R-01・R-02 */
+.heading {
+  margin-top: 13.5px;
+}
+
+.period {
+  margin-top: 13.5px;
+}
+
+.range {
+  margin-top: 14.2px;
+  font-size: var(--fs-note);
+  line-height: 1.2;
+  color: var(--color-sumi-soft);
+}
+
+/* この期間のまとめ：353×150。行は 44px おき（数の上が 台の上から 11px） */
+.summary {
+  margin-top: 12px;
+  padding: 9px 16px 10px;
+  border: var(--border-line) solid var(--color-line);
+  border-radius: 19px;
+  background: var(--color-white);
+}
+.row {
+  display: flex;
+  align-items: flex-start;
+  min-height: 39px;
+}
+.row + .row {
+  min-height: 44px;
+  padding-top: 3.5px;
+  border-top: 1.5px solid var(--color-line);
+}
+.icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24.5px;
+  margin-top: 1px;
+}
+.label {
+  flex: 1;
+  margin: 4px 0 0 13.5px;
+  font-size: 19px;
+  line-height: 19px;
+  color: var(--color-sumi-soft);
+}
+.value {
+  font-size: 24px;
+  line-height: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+}
+.value small {
+  font-size: 17px;
+  color: var(--color-sumi-soft);
+}

@@ -131,3 +131,82 @@
   font-size: 13px;
   color: var(--color-sumi-soft);
 }
+
+.status {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-sumi-soft);
+}
+.status strong {
+  color: var(--color-sumi);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.action,
+.small {
+  padding: 9px 12px;
+  border: var(--border-ink) solid var(--color-sumi);
+  border-radius: 12px;
+  background: var(--color-white);
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 700;
+  text-align: left;
+}
+.action:active:not(:disabled),
+.small:active {
+  background: var(--color-sand);
+}
+.action:disabled {
+  border-color: var(--color-line);
+  color: #9a9086;
+  cursor: not-allowed;
+}
+.actionOn {
+  border-color: var(--color-green);
+  background: var(--color-green-pale);
+  color: var(--color-green);
+}
+
+.accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.account {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--color-white);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.credential {
+  margin-top: 2px;
+  color: var(--color-sumi-soft);
+}
+.credential code {
+  font-family: var(--font-latin);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-sumi);
+  user-select: all;
+}
+.accountButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.small {
+  flex: 1;
+  padding: 6px 8px;
+  border-width: 2px;
+  font-size: 13px;
+  text-align: center;
+}

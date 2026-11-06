@@ -60,7 +60,7 @@ export function ReadyScreen() {
             <br />
             主人公が 進みます
           </p>
-          <p className={s.readySub}>アプリを閉じていても 大丈夫</p>
+          <p className={s.readySub}>アプリを開いている間、数えます</p>
         </GameWindow>
         <GameWindow className={s.readyWindow}>
           <img className={s.readyIconPause} src={pauseIcon} alt="" />

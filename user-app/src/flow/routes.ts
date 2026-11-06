@@ -16,6 +16,8 @@ export type RouteId =
   | 'login-name' // L-01
   | 'login-birthday' // L-02
   | 'login-letter' // L-03（案）
+  | 'staff-pin' // 管理者側ログイン：暗証番号
+  | 'staff-home' // 管理者画面（仮）
   | 'home'; // ホーム（次の段階で作る）
 
 export const ALL_ROUTES: { id: RouteId; code: string; name: string }[] = [
@@ -34,6 +36,8 @@ export const ALL_ROUTES: { id: RouteId; code: string; name: string }[] = [
   { id: 'login-name', code: 'L-01', name: 'ログイン① お名前' },
   { id: 'login-birthday', code: 'L-02', name: 'ログイン② 誕生日' },
   { id: 'login-letter', code: 'L-03', name: 'ログイン③ 合言葉の文字（案）' },
+  { id: 'staff-pin', code: 'M-15', name: '管理者側ログイン 暗証番号' },
+  { id: 'staff-home', code: 'M-15', name: '管理者画面（仮）' },
   { id: 'home', code: 'H-01', name: 'ホーム（仮）' },
 ];
 
