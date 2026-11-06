@@ -1,0 +1,137 @@
+/* H-03：冒険の結果のまど 363×476（外まで）。数値は Figma の位置から */
+.window {
+  margin: 0 -5px;
+  padding: 21px 0 31px;
+  text-align: left;
+}
+
+.title {
+  font-family: var(--font-dot);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--color-gold);
+  text-align: center;
+}
+
+.subtitle {
+  font-size: var(--fs-body);
+  line-height: 1.2;
+  color: var(--color-white);
+  text-align: center;
+}
+
+.divider {
+  height: 0;
+  margin: 20px 21px 0 19px;
+  border: none;
+  border-top: 2px dashed rgb(221 228 247 / 0.6);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  min-height: 34px;
+  margin-top: 14px;
+  padding: 0 23px 0 67px;
+}
+.rowEnemies {
+  margin-top: 34px;
+}
+.rowIcon {
+  position: absolute;
+  left: 23px;
+  top: 8px;
+}
+.rowLabel {
+  position: absolute;
+  left: 67px;
+  top: 13px;
+  font-size: 19px;
+  line-height: 1;
+  color: var(--color-navy-sub);
+}
+.rowValue {
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-white);
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+}
+.rowValue small {
+  font-size: 20px;
+  color: var(--color-navy-sub);
+}
+
+.enemies {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 18px;
+  min-height: 42px;
+  margin: 18px 0 0;
+  padding: 0 23px 0 67px;
+  list-style: none;
+}
+.more {
+  align-self: center;
+  font-size: 17px;
+  color: var(--color-navy-sub);
+}
+
+.divider2 {
+  margin-top: 22px;
+}
+
+.gotLabel {
+  margin-top: 17px;
+  padding-left: 23px;
+  font-size: 19px;
+  line-height: 1.2;
+  color: var(--color-navy-sub);
+}
+
+.rewards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 21px 0 19px;
+}
+.reward {
+  position: relative;
+  min-height: 74px;
+  padding: 11px 8px 10px 16px;
+  border-radius: 12px;
+  background: var(--color-navy-2);
+}
+.rewardPoint {
+  padding-left: 48px;
+}
+.rewardIcon {
+  position: absolute;
+  left: 13.5px;
+  top: 24px;
+}
+.rewardLabel {
+  font-size: 17px;
+  line-height: 1.2;
+  color: var(--color-navy-sub);
+}
+.rewardValue {
+  margin-top: 1px;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--color-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  margin: 24px 23px 8px;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-white);
+  text-align: center;
+}

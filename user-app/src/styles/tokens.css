@@ -24,6 +24,15 @@
   --color-paper: #fcfcfc; /* はじめの画面の地 */
   --color-sky: #8fd0f2; /* 冒険の背景の空 */
   --color-desk: #ece6d8; /* デモ：スマホの外側 */
+  --color-navy-2: #2d3a6b; /* 紺の上の台・ピル */
+  --color-navy-3: #3a4777; /* 経験値のバー（まだ） */
+  --color-navy-4: #3a4a85; /* レベルアップの光（内） */
+  --color-navy-deep: #0f1530; /* 経験値のバーの地 */
+  --color-bar: #3e9a63; /* グラフの棒 */
+  --color-gold-pale: #fff3cc; /* レベルのラベル */
+  --color-gold-line: #ffd161;
+  --color-gold-text: #9a5b00;
+  --color-dim: rgb(30 27 24 / 0.64); /* 確認の窓のうしろを暗くする */
 
   /* 書体 */
   --font-ui: "BIZ UDPGothic", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", Meiryo,

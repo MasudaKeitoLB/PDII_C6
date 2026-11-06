@@ -1,0 +1,350 @@
+/* M-01〜M-04 と プロフィールの変更。数値は Figma の各画面の位置から */
+
+.heading {
+  margin-top: 13.5px;
+}
+
+/* ---------- M-01 わたし ---------- */
+
+/* プロフィール：353×150 */
+.profile {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  min-height: 150px;
+  margin-top: 17.5px;
+  padding: 21px 16px 12px;
+  border: var(--border-line) solid var(--color-line);
+  border-radius: 19px;
+  background: var(--color-white);
+}
+
+/* アバター：104×104。空と草の上に 主人公 */
+.avatar {
+  position: relative;
+  flex: none;
+  width: 104px;
+  height: 104px;
+  overflow: hidden;
+  border: var(--border-ink) solid var(--color-sumi);
+  border-radius: 14px;
+  background: linear-gradient(to bottom, #a9dcf6 0 76.3%, #62b04e 76.3% 100%);
+}
+.avatar img {
+  position: absolute;
+  left: 17.5px;
+  top: 9.5px;
+}
+
+.profileText {
+  min-width: 0;
+  padding-top: 9px;
+}
+.nickname {
+  font-size: 28px;
+  line-height: 28px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.fullName {
+  margin-top: 14px;
+  font-size: var(--fs-note);
+  line-height: var(--fs-note);
+  color: var(--color-sumi-soft);
+}
+.levelBadge {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 0 21px;
+  border: 2px solid var(--color-gold-line);
+  border-radius: 15px;
+  background: var(--color-gold-pale);
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 700;
+  color: var(--color-gold-text);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 32px;
+}
+
+/* 「あ」のアイコン：34×34 */
+.textSizeIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding-bottom: 2px;
+  border: var(--border-ink) solid var(--color-sumi);
+  border-radius: 8px;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* 行の施設アイコンは 28×30 で出す（同じ絵を 少し小さく） */
+.facilityIcon {
+  transform: scale(0.889);
+}
+
+/* ---------- M-02 文字の大きさ ---------- */
+
+.lead {
+  margin-top: 11.5px;
+}
+
+.sizeCards {
+  display: flex;
+  flex-direction: column;
+  gap: 13.5px;
+  margin-top: 24px;
+}
+
+/* 353×134（ふちの外側まで 136.5）、影4px。選ぶと 緑のふち4px＋● */
+.sizeCard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12.5px;
+  min-height: 136.5px;
+  padding: 21.5px 17.5px 14.5px;
+  border-radius: var(--radius-control);
+  text-align: left;
+}
+.sizeCardSelected {
+  margin: -0.5px -1.5px -1px;
+  min-height: 138px;
+  padding: 20.5px 17.5px 14px;
+  border: 4px solid var(--color-green);
+  background: var(--color-green-pale);
+  --shadow: var(--color-green);
+}
+.sizeHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-left: 2px;
+}
+.radio {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border: 3px solid var(--color-sumi);
+  border-radius: 50%;
+  background: var(--color-white);
+}
+.sizeCardSelected .radio {
+  border-color: var(--color-green);
+}
+.dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-green);
+}
+.sizeLabel {
+  padding-bottom: 3px;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* 見本：313×52 */
+.sample {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 4px 16px 6px;
+  border-radius: 10px;
+  background: var(--color-kinari);
+  color: var(--color-sumi-soft);
+  white-space: nowrap;
+}
+.sizeCardSelected .sample {
+  background: var(--color-white);
+}
+.sample strong {
+  margin-left: 0.3em;
+  color: var(--color-sumi);
+}
+.sample_normal {
+  font-size: 20px;
+}
+.sample_large {
+  font-size: 24px;
+}
+.sample_xlarge {
+  font-size: 28px;
+}
+
+.sizeNote {
+  margin-top: 10.5px;
+}
+
+/* ---------- M-03 記録を見せる相手 ---------- */
+
+/* 見せているもの：353×104 */
+.sharedInfo {
+  margin-top: 17.5px;
+  padding: 13.5px 18px 10.5px;
+  border-radius: var(--radius-card);
+  background: var(--color-sand);
+}
+.sharedWhat {
+  font-size: var(--fs-note);
+  line-height: 28px;
+  font-weight: 700;
+}
+.sharedNot {
+  font-size: var(--fs-note);
+  line-height: 24px;
+  color: var(--color-sumi-soft);
+}
+
+/* 相手ごとの台：353×196 */
+.targetCard {
+  position: relative;
+  min-height: 196px;
+  margin-top: 16px;
+  padding: 17px 16px 12px 68px;
+  border: var(--border-line) solid var(--color-line);
+  border-radius: 19px;
+  background: var(--color-white);
+}
+.targetIcon {
+  position: absolute;
+  left: 18.2px;
+  top: 20px;
+}
+.targetName {
+  font-size: var(--fs-item-title);
+  line-height: 1.2;
+  font-weight: 700;
+}
+.targetSub {
+  margin-top: 5px;
+  font-size: var(--fs-note);
+  line-height: 1.2;
+  color: var(--color-sumi-soft);
+}
+
+/* 見せています：150×32 */
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  margin-top: 12.4px;
+  padding: 0 22px 2px 9.4px;
+  border: 2px solid;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.statusOn {
+  border-color: var(--color-green);
+  background: var(--color-green-pale);
+  color: var(--color-green);
+}
+.statusOff {
+  border-color: var(--color-line);
+  background: var(--color-sand);
+  color: var(--color-sumi-soft);
+}
+.statusCheck {
+  margin: 0 -2px;
+  transform: scale(0.784);
+}
+.statusCross {
+  margin: 0 -2px 0 0;
+  transform: scale(0.8);
+}
+
+/* 見せるのを やめる：317×54、影4px */
+.targetButton {
+  display: grid;
+  place-items: center;
+  /* カードのふちから 左右とも 17px（Figma M-03：画面の端から 37px） */
+  width: calc(100% + 54px);
+  height: 54px;
+  margin: 10px 0 0 -53px;
+  padding-bottom: 3px;
+  border-radius: var(--radius-control);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.shareNote {
+  margin-top: 16px;
+  font-size: var(--fs-note-sm);
+}
+
+/* ---------- M-04 確認の窓（353×462） ---------- */
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.confirmPerson {
+  transform: scale(1.222);
+  margin: 4px 0;
+}
+.confirmFacility {
+  transform: scale(1.14);
+  margin: 4px 0;
+}
+.confirmTitle {
+  margin-top: 16.7px;
+  font-size: 24px;
+  line-height: 36px;
+  font-weight: 700;
+}
+.confirmText {
+  margin-top: 13px;
+  font-size: var(--fs-note);
+  line-height: 28px;
+  color: var(--color-sumi-soft);
+}
+.confirmButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin-top: 23px;
+}
+/* 強い確認（やめる・消す）：墨のボタン（Figma 部品：確認ボタン） */
+.dangerButton {
+  min-height: 64px;
+  border-color: var(--color-sumi);
+  background: var(--color-sumi);
+  color: var(--color-white);
+  font-size: var(--fs-item-title);
+  --shadow: #000;
+}
+.confirmBack {
+  min-height: 60px;
+  font-size: var(--fs-item-title);
+}
+
+/* ---------- お名前・身長・体重 ---------- */
+
+.profileRows {
+  margin-top: 24px;
+}
+.logoutLead {
+  margin-top: 36px;
+  font-size: var(--fs-note);
+  line-height: 1.4;
+  color: var(--color-sumi-soft);
+}
+.logoutButton {
+  margin-top: 10px;
+}

@@ -1,0 +1,237 @@
+/* 利用者アプリ（ホーム・冒険・記録・わたし）。数値は Figma の各画面の位置から出している */
+
+/* ---------- H-01 ホーム ---------- */
+
+/* ポイントのまど：150×66 */
+.pointWindow {
+  width: 150px;
+  height: 66px;
+}
+.pointIcon {
+  position: absolute;
+  left: 15px;
+  top: 17px;
+}
+.pointLabel {
+  position: absolute;
+  left: 55px;
+  top: 8px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--color-navy-sub);
+}
+.pointValue {
+  position: absolute;
+  left: 55px;
+  top: 25px;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-white);
+}
+
+/* 主人公の状態のまど：371×124（とても大きい 371×134） */
+.statusWindow {
+  --name-fs: 20px;
+  --name-top: 21px;
+  --level-fs: 32px;
+  --level-label-fs: 20px;
+  --level-top: 11px;
+  --exp-text-fs: 18px;
+  --exp-text-top: 85px;
+  width: 371px;
+  height: 124px;
+}
+:root[data-text-size="large"] .statusWindow {
+  --name-fs: 24px;
+  --name-top: 17px;
+  --level-fs: 34px;
+  --level-label-fs: 22px;
+  --level-top: 9px;
+  --exp-text-fs: 20px;
+  --exp-text-top: 88px;
+  --exp-height: 26px;
+  height: 129px;
+}
+:root[data-text-size="xlarge"] .statusWindow {
+  --name-fs: 28px;
+  --name-top: 13px;
+  --level-fs: 36px;
+  --level-label-fs: 24px;
+  --level-top: 5px;
+  --exp-text-fs: 22px;
+  --exp-text-top: 91px;
+  --exp-height: 28px;
+  height: 134px;
+}
+.heroName {
+  position: absolute;
+  left: 21px;
+  top: var(--name-top);
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--name-fs);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-white);
+}
+.level {
+  position: absolute;
+  right: 21px;
+  top: var(--level-top);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-dot);
+  line-height: 1.45;
+}
+.levelLabel {
+  font-size: var(--level-label-fs);
+  color: var(--color-navy-sub);
+}
+.levelValue {
+  font-size: var(--level-fs);
+  color: var(--color-gold);
+}
+.expBar {
+  position: absolute;
+  left: 16px;
+  top: 54px;
+  width: 335px;
+}
+.expText {
+  position: absolute;
+  left: 21px;
+  top: var(--exp-text-top);
+  font-size: var(--exp-text-fs);
+  line-height: 1;
+  color: var(--color-navy-sub);
+  white-space: nowrap;
+}
+.expText strong {
+  color: var(--color-white);
+}
+
+/* 歩数を数える準備（iPhone で まだ許可していないとき） */
+.motionNotice {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 18px;
+  border: var(--border-line) solid var(--color-gold-line);
+  border-radius: 19px;
+  background: var(--color-gold-pale);
+  font-size: var(--fs-note);
+  line-height: var(--lh-note);
+  color: var(--color-sumi);
+}
+
+/* 今日の歩数の台：353×274（とても大きい 353×306） */
+.todayCard {
+  --head-fs: 20px;
+  --num-fs: 64px;
+  --unit-fs: 30px;
+  --row-fs: 20px;
+  --upd-fs: 16px;
+  margin-top: 14px;
+  padding: 26px 18px 34px;
+  border: var(--border-line) solid var(--color-line);
+  border-radius: 19px;
+  background: var(--color-white);
+}
+:root[data-text-size="large"] .todayCard {
+  --head-fs: 24px;
+  --num-fs: 72px;
+  --unit-fs: 32px;
+  --row-fs: 24px;
+  --upd-fs: 18px;
+  padding-top: 20px;
+  padding-bottom: 26px;
+}
+:root[data-text-size="xlarge"] .todayCard {
+  --head-fs: 28px;
+  --num-fs: 80px;
+  --unit-fs: 34px;
+  --row-fs: 28px;
+  --upd-fs: 21px;
+  padding-top: 15px;
+  padding-bottom: 18px;
+}
+.todayHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.todayTitle {
+  font-size: var(--head-fs);
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--color-sumi-soft);
+}
+.updated,
+.updatedInline {
+  flex: none;
+  font-size: var(--upd-fs);
+  font-weight: 400;
+  color: var(--color-hint);
+  white-space: nowrap;
+}
+.leftSteps {
+  margin-top: 18px;
+  display: flex;
+  align-items: baseline;
+  font-size: var(--num-fs);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-green);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+:root[data-text-size="large"] .leftSteps {
+  margin-top: 12px;
+}
+:root[data-text-size="xlarge"] .leftSteps {
+  margin-top: 5px;
+}
+.leftUnit {
+  font-size: var(--unit-fs);
+  white-space: pre;
+}
+.reachedStar {
+  align-self: center;
+  margin-right: 8px;
+}
+.todayBar {
+  margin-top: 28px;
+}
+:root[data-text-size="xlarge"] .todayBar {
+  margin-top: 26px;
+}
+.todayRows {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-top: 20px;
+  font-size: var(--row-fs);
+  line-height: 1.2;
+  color: var(--color-sumi-soft);
+}
+.todayRows strong {
+  color: var(--color-sumi);
+}
+:root[data-text-size="xlarge"] .todayRows {
+  flex-direction: column;
+  gap: 0;
+  margin-top: 13px;
+  line-height: 42px;
+}
+:root[data-text-size="xlarge"] .todayRows p:last-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}

@@ -5,16 +5,35 @@
   min-height: 560px;
 }
 
-/* パソコンで開いたとき：確認用のパネルと スマホの枠をならべる */
+/* 管理者画面 PC版を そのまま開いたとき */
+.pcPage {
+  position: relative;
+  height: 100%;
+  min-height: 640px;
+}
+
+/* 画面と 歩きスマホ防止を 重ねる台 */
+.stack {
+  position: absolute;
+  inset: 0;
+}
+
+/* パソコンで開いたとき：確認用のパネルと スマホ（PC版は 1440×1024）の枠をならべる */
 .desk {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 56px;
+  gap: 40px;
   min-height: 100%;
   padding-block: 24px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.deskMain {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
 }
 
 @media (max-width: 860px) {

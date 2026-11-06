@@ -1,0 +1,51 @@
+.control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border: var(--border-ink) solid var(--color-sumi);
+  background: var(--color-white);
+}
+
+.option {
+  font-weight: 700;
+  color: var(--color-sumi);
+  white-space: nowrap;
+}
+
+.selected {
+  background: var(--color-green);
+  color: var(--color-white);
+}
+
+/* 記録（R-01）：353×62、選択中 166.5×52 */
+.large {
+  height: 62px;
+  padding: 2.5px;
+  border-radius: 31px;
+}
+.large .option {
+  border-radius: 26px;
+  font-size: var(--fs-button);
+}
+
+/* 測定結果（AM-03）：353×48、選択中 166.5×38 */
+.medium {
+  height: 48px;
+  padding: 2.5px;
+  border-radius: 24px;
+}
+.medium .option {
+  border-radius: 19px;
+  font-size: 18px;
+}
+
+/* 一覧の並べかえ（AM-02）・PCの期間（AP-03）：高さ44、選択中 高さ34 */
+.small {
+  height: 44px;
+  padding: 2.5px;
+  border-radius: 22px;
+}
+.small .option {
+  border-radius: 17px;
+  font-size: 16px;
+}

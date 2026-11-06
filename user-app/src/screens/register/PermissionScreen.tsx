@@ -9,7 +9,6 @@ import { Heading, Lead, Screen } from '../../components/Screen';
 import { useAppState } from '../../flow/AppState';
 import { registerUser } from '../../lib/auth';
 import { DEFAULT_HEIGHT_CM, DEFAULT_WEIGHT_KG } from '../../lib/bodyDefaults';
-import { requestSensorPermissions } from '../../lib/permissions';
 import type { Profile } from '../../lib/types';
 import s from '../screens.module.css';
 
@@ -18,7 +17,7 @@ import s from '../screens.module.css';
  * スマホの許可画面の前に、理由を ふだんの言葉で説明する。
  */
 export function PermissionScreen() {
-  const { navigate, registration, resetRegistration, setUser, useLoginLetter } = useAppState();
+  const { navigate, registration, resetRegistration, useLoginLetter, allowMotion } = useAppState();
   const [busy, setBusy] = useState(false);
   const [missing, setMissing] = useState(false);
 
@@ -29,7 +28,9 @@ export function PermissionScreen() {
       return;
     }
     setBusy(true);
-    await requestSensorPermissions();
+    // iPhone では ボタン操作の中で 最初に 許可を求める（この前に await を はさまない）。
+    // 許可されなくても 登録は進める（あとから ホームで 許可できる）
+    await allowMotion();
     const profile: Profile = {
       name: r.name,
       birthday: r.birthday,
@@ -40,8 +41,8 @@ export function PermissionScreen() {
       weightKg: r.weightKg ?? DEFAULT_WEIGHT_KG[r.gender],
       dailyGoalSteps: r.dailyGoalSteps,
     };
-    const user = await registerUser(profile, r.shareConsent ?? { agreed: false, decidedAt: new Date().toISOString() });
-    setUser(user);
+    // 「今は見せない」を選んだときや まだ選んでいないときは 見せない（N-14）
+    registerUser(profile, r.shareConsent?.agreed ?? false);
     resetRegistration();
     setBusy(false);
     navigate('register-ready');
@@ -87,9 +88,9 @@ export function PermissionScreen() {
         </InfoCard>
         <InfoCard className={s.permissionCard}>
           <IconItem icon={distanceIcon} title="歩いた距離をはかる" iconGap={20.5} iconTop={4}>
-            いる場所を使います。
+            歩数と 歩幅から 出します。
             <br />
-            いる場所は だれにも見せません
+            いる場所は 使いません
           </IconItem>
         </InfoCard>
       </div>
