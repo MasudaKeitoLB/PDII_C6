@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { DemoPanel, DEMO_PANEL_RESERVE } from './demo/DemoPanel';
 import { DeviceFrame, PcFrame } from './demo/DeviceFrame';
 import { useAppState } from './flow/AppState';
 import { routeInfo, type RouteId } from './flow/routes';
+import { useWideLayout } from './flow/useWideLayout';
 import { AdminListScreen } from './screens/admin/AdminListScreen';
 import { AdminLoginScreen } from './screens/admin/AdminLoginScreen';
 import { AdminPcListScreen } from './screens/admin/AdminPcListScreen';
@@ -51,18 +52,6 @@ const EDGE_COLOR: Partial<Record<RouteId, string>> = {
 /** 紺の画面では ステータスバー・ホームバーを 白にする（Figma の H-02・H-04・AM-01〜03） */
 const LIGHT_STATUS = new Set<RouteId>(['level-up', 'admin-login', 'admin-list', 'admin-user']);
 const LIGHT_INDICATOR = new Set<RouteId>(['level-up']);
-
-function useWideLayout() {
-  const query = '(min-width: 720px) and (min-height: 560px)';
-  const [wide, setWide] = useState(() => window.matchMedia(query).matches);
-  useEffect(() => {
-    const mql = window.matchMedia(query);
-    const onChange = () => setWide(mql.matches);
-    mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
-  }, []);
-  return wide;
-}
 
 function CurrentScreen() {
   const { route, user, admin, useLoginLetter } = useAppState();

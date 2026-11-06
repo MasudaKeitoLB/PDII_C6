@@ -1,4 +1,5 @@
 import { STOP_AFTER_MS, UNLOCK_DELAY_MS, useAppState } from '../flow/AppState';
+import type { MotionSignal } from '../lib/motion';
 import type { MotionAccess } from '../lib/permissions';
 import { ALL_ROUTES, routeInfo, type RouteId } from '../flow/routes';
 import { ADMIN_ACCOUNTS, canSeeUser, findAdmin, ROLE_LABEL } from '../lib/admin';
@@ -18,10 +19,17 @@ const DEMO_WALK_STEPS = 2345;
 /** 体の動きで 歩数を数えられるか（スマホでは 体の動きで、PC では 下のボタンで 歩く） */
 const MOTION_LABEL: Record<MotionAccess, string> = {
   checking: '調べています',
-  granted: '数えられます（PC では 値が届きません）',
+  granted: '数えられます',
   'needs-button': 'ホームで 許可が必要です（iPhone）',
   denied: '許可されていません',
   unsupported: 'このブラウザでは 数えられません',
+};
+
+/** 数えられるとき、値が届いているか（Android で 設定を止めていると 届かない。PC は センサーが無いので 届かないのが ふつう） */
+const SIGNAL_LABEL: Record<MotionSignal, string> = {
+  unknown: '',
+  receiving: '（値が届いています）',
+  silent: '（値が届いていません。PC では ふつう）',
 };
 
 const GROUPS: { title: string; ids: RouteId[] }[] = [
@@ -82,6 +90,7 @@ export function DemoPanel() {
     stopWalking,
     walkDemoSteps,
     motionAccess,
+    motionSignal,
     useLoginLetter,
     setUseLoginLetter,
     resetRegistration,
@@ -142,7 +151,11 @@ export function DemoPanel() {
           管理者画面：{admin ? <strong>{`${admin.name}（${ROLE_LABEL[admin.role]}）`}</strong> : 'ログインしていません'}
         </p>
         <p className={styles.status}>
-          体の動き：<strong>{MOTION_LABEL[motionAccess]}</strong>
+          体の動き：
+          <strong>
+            {MOTION_LABEL[motionAccess]}
+            {motionAccess === 'granted' && SIGNAL_LABEL[motionSignal]}
+          </strong>
         </p>
       </section>
 

@@ -19,6 +19,42 @@
   color: var(--color-sumi);
 }
 
+/* 数えられないときの 確かめ方（スタッフ向け） */
+.help {
+  padding: 14px 16px;
+  border: var(--border-line) solid var(--color-gold-line);
+  border-radius: var(--radius-card);
+  background: var(--color-gold-pale);
+  font-size: var(--fs-note-sm);
+  line-height: 1.6;
+  color: var(--color-sumi);
+}
+
+.help ul {
+  margin: 6px 0 0;
+  padding-left: 1.2em;
+}
+
+/* この端末（名前と値の組） */
+.env {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 14px;
+  margin: 0;
+  font-size: var(--fs-note-sm);
+  line-height: 1.5;
+}
+
+.env dt {
+  color: var(--color-sumi-soft);
+}
+
+.env dd {
+  margin: 0;
+  color: var(--color-sumi);
+  overflow-wrap: anywhere;
+}
+
 .counts {
   display: flex;
   flex-direction: column;

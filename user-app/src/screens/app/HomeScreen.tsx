@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import homeBg from '../../assets/scene/home-bg.svg';
 import homeBgXlarge from '../../assets/scene/home-bg-xlarge.svg';
 import enemyAmagumo from '../../assets/sprite/enemy-amagumo.svg';
@@ -14,6 +14,8 @@ import { GameWindow } from '../../components/GameWindow';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Screen } from '../../components/Screen';
 import { useAppState, useUser } from '../../flow/AppState';
+import { motionNoticeKind } from '../../lib/motionNotice';
+import { detectOs } from '../../lib/platform';
 import { dayKey, formatReceived, now } from '../../lib/dates';
 import { levelProgress, stepsToNextLevel, upcomingEnemy } from '../../lib/game';
 import { formatSteps } from '../../lib/health';
@@ -34,7 +36,26 @@ const ENEMY_SPRITES: Record<EnemyId, { src: string; x: number; width: number; he
  */
 export function HomeScreen() {
   const user = useUser();
-  const { motionAccess, allowMotion } = useAppState();
+  const { motionAccess, allowMotion, motionSignal, recheckMotion } = useAppState();
+  // 「値が届かない」は スマホ・タブレット（iPhone・iPad・Android）で開いたときだけ出す（PC のデモには センサーが無い）。
+  // 画面の広さでは 決めない（広い Android タブレットでも 出すため）
+  const phoneLike = detectOs() !== 'other';
+  const [rechecking, setRechecking] = useState(false);
+  useEffect(() => {
+    if (motionSignal !== 'unknown') setRechecking(false);
+  }, [motionSignal]);
+  const kind = motionNoticeKind(motionAccess, motionSignal, phoneLike);
+  // たしかめている間も 案内を消さない（消えて 3秒後に また出る ちらつきを ふせぐ）
+  const notice = rechecking && kind === null && motionAccess === 'granted' ? 'silent' : kind;
+  const recheck = () => {
+    // iPhone では ボタン操作の中で 最初に 許可を求める
+    const pending = recheckMotion();
+    setRechecking(true);
+    // 許可されなかったときは 値を見なおさないので、ここで「たしかめています…」を もどす
+    void pending.then((access) => {
+      if (access !== 'granted') setRechecking(false);
+    });
+  };
   const xl = user.textSize === 'xlarge';
   const today = now();
   const todaySteps = user.days[dayKey(today)] ?? 0;
@@ -92,8 +113,8 @@ export function HomeScreen() {
         </FitScene>
       }
     >
-      {/* iPhone で まだ許可していない人・許可しなかった人にだけ、今日の歩数の上に出す（ほかの人には 何も出さない：N-06） */}
-      {motionAccess === 'needs-button' && (
+      {/* 数えられない人にだけ、今日の歩数の上に出す（ほかの人には 何も出さない：N-06） */}
+      {notice === 'needs-button' && (
         <section className={s.motionNotice} aria-label="歩数を数える準備">
           <p>
             歩数を 数えるには、下のボタンを 押してください。
@@ -103,13 +124,18 @@ export function HomeScreen() {
           <Button onClick={() => void allowMotion()}>歩数を 数えはじめる</Button>
         </section>
       )}
-      {motionAccess === 'denied' && (
+      {(notice === 'blocked' || notice === 'silent') && (
         <section className={s.motionNotice} aria-label="歩数を数える準備">
           <p>
             いまは 歩数を 数えられません。
             <br />
             スタッフに 声をかけてください
           </p>
+          {notice === 'silent' && (
+            <Button variant="secondary" onClick={recheck} disabled={rechecking}>
+              {rechecking ? 'たしかめています…' : 'もう一度 たしかめる'}
+            </Button>
+          )}
         </section>
       )}
       <section className={s.todayCard} aria-label="今日の歩数">

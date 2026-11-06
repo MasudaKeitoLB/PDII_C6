@@ -10,6 +10,13 @@ const TIMEOUT = 8000;
 
 const browser = await chromium.launch({ channel: CHANNEL });
 const page = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
+
+/** 外の Google Fonts を読まない（そのときの ネットワークで 開くのが 遅れて テストが落ちないように。文字は ほかのフォントで出る） */
+const blockFonts = (target) =>
+  target.route(/fonts\.(googleapis|gstatic)\.com/, (route) =>
+    route.fulfill({ status: 200, contentType: route.request().url().includes('googleapis') ? 'text/css' : 'font/woff2', body: '' }),
+  );
+await blockFonts(page);
 page.setDefaultTimeout(TIMEOUT);
 
 const results = [];
@@ -386,21 +393,24 @@ await test('26 見せるのをやめた人は、管理者の一覧から消え�
 // ---- 体の動きで 歩数を数える（M-03・M-11）----
 console.log('体の動きで 歩数を数える');
 
-/** スマホを持って steps 歩 歩いたときの 体の動きを、実際の時間に合わせて 1秒に60回 送る */
-const walkMotion = (steps, { hz = 1.8, amp = 3 } = {}) =>
-  page.evaluate(
-    async ({ steps, hz, amp }) => {
-      const rate = 60;
-      const total = Math.round((steps / hz) * rate);
+/**
+ * スマホを持って steps 歩 歩いたときの 体の動きを、実際の時間に合わせて 1秒に rate 回 送る
+ * （iPhone・Chrome は 60、Firefox は 10 ほど）。target で 送るページを えらべる
+ */
+const walkMotion = (steps, { hz = 1.8, amp = 3, rate = 60 } = {}, target = page) =>
+  target.evaluate(
+    async ({ steps, hz, amp, rate }) => {
+      // 送る回数ではなく 実際の時間で止める（PC が重くて 待ちが長くなっても、送る波が ちょうど steps 歩分になるように）
       const startedAt = performance.now();
-      for (let i = 0; i < total; i++) {
+      for (;;) {
         const sec = (performance.now() - startedAt) / 1000;
+        if (sec >= steps / hz) break;
         const y = 9.8 + amp * Math.sin(2 * Math.PI * hz * sec);
         window.dispatchEvent(new DeviceMotionEvent('devicemotion', { accelerationIncludingGravity: { x: 0, y, z: 0 }, interval: 1000 / rate }));
         await new Promise((r) => setTimeout(r, 1000 / rate));
       }
     },
-    { steps, hz, amp },
+    { steps, hz, amp, rate },
   );
 /** 手で 2回 ゆらしただけの 動き */
 const shakeMotion = () =>
@@ -488,6 +498,7 @@ await test('32 歩数の精度を確かめる画面（チーム用）：10歩で
 
 await test('33 iPhone：まだ許可していないと ホームに案内が出て、ボタンを押すと 許可を求めて 数えはじめる', async () => {
   const ios = await browser.newPage({ viewport: { width: 1500, height: 1100 } });
+  await blockFonts(ios);
   ios.setDefaultTimeout(TIMEOUT);
   ios.on('pageerror', (e) => problems.push(`pageerror(iPhone): ${e.message}`));
   // iPhone の Safari と同じく、ボタン操作の中で呼んだときだけ 許可を求められる（それ以外は NotAllowedError）
@@ -515,6 +526,149 @@ await test('33 iPhone：まだ許可していないと ホームに案内が出�
     await ios.locator('aside').getByText('体の動き：数えられます').first().waitFor({ state: 'visible' });
   } finally {
     await ios.close();
+  }
+});
+
+// ---- Android版 ----
+console.log('Android版');
+
+const ANDROID_CHROME_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36';
+const FIREFOX_ANDROID_UA = 'Mozilla/5.0 (Android 14; Mobile; rv:144.0) Gecko/144.0 Firefox/144.0';
+
+/**
+ * スマホ（412×915、指で触れる）として 開いた ページ。init で ブラウザの ちがいを まねる。
+ * 確認パネルは出ないので、サンプルの利用者には 試作のサーバー（store.ts）から入る
+ */
+const openPhone = async ({ userAgent = ANDROID_CHROME_UA, init } = {}) => {
+  const phone = await browser.newPage({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, userAgent });
+  await blockFonts(phone);
+  phone.setDefaultTimeout(TIMEOUT);
+  phone.on('pageerror', (e) => problems.push(`pageerror(スマホ): ${e.message}`));
+  phone.on('console', (m) => {
+    if (m.type() === 'error' || m.type() === 'warning') problems.push(`console.${m.type()}(スマホ): ${m.text()} ${m.location().url ?? ''}`);
+  });
+  if (init) await phone.addInitScript(init);
+  await phone.goto(BASE);
+  await phone.evaluate(async () => {
+    const s = await import('/src/lib/store.ts');
+    s.resetAll();
+    s.loginAs('s-yamada');
+    location.hash = 'home';
+  });
+  await phone.getByLabel('今日の歩数').waitFor({ state: 'visible' });
+  return phone;
+};
+/** 山田 花子さんの これまでの歩数の合計（試作のサーバーから読む） */
+const totalSteps = (target) =>
+  target.evaluate(async () => {
+    const s = await import('/src/lib/store.ts');
+    return Object.values(s.findUser('s-yamada').days).reduce((a, b) => a + b, 0);
+  });
+const cannotCountNotice = (target) => target.getByRole('region', { name: '歩数を数える準備' }).getByText('いまは 歩数を 数えられません');
+
+/** Android の古い Chrome・Samsung Internet：requestPermission が無い（Permissions API はある） */
+const NO_PERMISSION_BUTTON = () => {
+  delete DeviceMotionEvent.requestPermission;
+  Object.defineProperty(navigator, 'userAgentData', { configurable: true, get: () => ({ platform: 'Android', mobile: true }) });
+};
+
+await test('34 Android の Chrome：許可のボタンなしで 数えられ、案内も出ない', async () => {
+  const phone = await openPhone({ init: NO_PERMISSION_BUTTON });
+  try {
+    const before = await totalSteps(phone);
+    await walkMotion(10, {}, phone);
+    assert((await phone.getByRole('region', { name: '歩数を数える準備' }).count()) === 0, '数えられるのに 案内が出た');
+    await phone.waitForTimeout(2300);
+    const added = (await totalSteps(phone)) - before;
+    assert(Math.abs(added - 10) <= 2, `ふえた歩数が ${added}歩`);
+  } finally {
+    await phone.close();
+  }
+});
+
+await test('35 Android：モーション センサーを止めていると 案内が出て 数えない。設定を直すと 消える', async () => {
+  // (a) requestPermission が無く、Permissions API が「ブロック」を返す（Samsung Internet・古い Chrome）
+  const phone = await openPhone({
+    init: () => {
+      delete DeviceMotionEvent.requestPermission;
+      const status = new EventTarget();
+      status.state = 'denied';
+      window.__accelerometer = status;
+      const query = navigator.permissions.query.bind(navigator.permissions);
+      navigator.permissions.query = (desc) => (desc?.name === 'accelerometer' ? Promise.resolve(status) : query(desc));
+    },
+  });
+  try {
+    await visible(cannotCountNotice(phone), '数えられない案内');
+    const before = await totalSteps(phone);
+    await walkMotion(8, {}, phone);
+    await phone.waitForTimeout(500);
+    assert((await totalSteps(phone)) === before, '止めているのに 数えた');
+    await phone.evaluate(() => {
+      window.__accelerometer.state = 'granted';
+      window.__accelerometer.dispatchEvent(new Event('change'));
+    });
+    await cannotCountNotice(phone).waitFor({ state: 'detached' });
+  } finally {
+    await phone.close();
+  }
+  // (b) Chrome 152 から：requestPermission が「denied」を返す
+  const chrome = await openPhone({ init: () => (DeviceMotionEvent.requestPermission = () => Promise.resolve('denied')) });
+  try {
+    await visible(cannotCountNotice(chrome), '数えられない案内（Chrome 152 から）');
+  } finally {
+    await chrome.close();
+  }
+});
+
+await test('36 値が届かないと 3秒で 案内が出て、「もう一度 たしかめる」で 値が届けば 消える', async () => {
+  const phone = await openPhone({ init: NO_PERMISSION_BUTTON });
+  try {
+    // センサーを止めた Chrome と同じく、中身のない値が 1回だけ届く
+    await phone.evaluate(() => window.dispatchEvent(new DeviceMotionEvent('devicemotion')));
+    await visible(cannotCountNotice(phone), '値が届かない案内');
+    await phone.getByRole('button', { name: 'もう一度 たしかめる', exact: true }).click();
+    await walkMotion(3, {}, phone);
+    await cannotCountNotice(phone).waitFor({ state: 'detached' });
+  } finally {
+    await phone.close();
+  }
+});
+
+await test('37 PC の画面では 値が届かなくても ホームに案内を出さず、確認パネルに出す', async () => {
+  await reset();
+  await enterSample();
+  await page.evaluate(() => window.dispatchEvent(new DeviceMotionEvent('devicemotion')));
+  await page.locator('aside').getByText('値が届いていません。PC では ふつう', { exact: false }).waitFor({ state: 'visible', timeout: 6000 });
+  assert((await page.getByRole('region', { name: '歩数を数える準備' }).count()) === 0, 'PC のホームに 案内が出た');
+});
+
+await test('38 Firefox（1秒に 10回）：数えられ、確かめる画面の B も 10±1', async () => {
+  const phone = await openPhone({
+    userAgent: FIREFOX_ANDROID_UA,
+    init: () => {
+      delete DeviceMotionEvent.requestPermission;
+      Object.defineProperty(navigator, 'userAgentData', { configurable: true, get: () => undefined });
+      const query = navigator.permissions.query.bind(navigator.permissions);
+      // Firefox は accelerometer を 知らない
+      navigator.permissions.query = (desc) => (desc?.name === 'accelerometer' ? Promise.reject(new TypeError('accelerometer is not a valid value')) : query(desc));
+    },
+  });
+  try {
+    const before = await totalSteps(phone);
+    await walkMotion(10, { rate: 10 }, phone);
+    await phone.waitForTimeout(2300);
+    const added = (await totalSteps(phone)) - before;
+    assert(Math.abs(added - 10) <= 2, `ふえた歩数が ${added}歩`);
+    await phone.evaluate(() => (location.hash = 'check-steps'));
+    await phone.getByRole('button', { name: 'はじめる', exact: true }).click();
+    await walkMotion(10, { rate: 10 }, phone);
+    await phone.waitForTimeout(600);
+    const b = Number(await phone.locator('[data-variant="B"]').innerText());
+    assert(Math.abs(b - 10) <= 1, `B が ${b}歩`);
+    await visible(phone.getByText('Android・Firefox'), '端末の表示');
+  } finally {
+    await phone.close();
   }
 });
 
