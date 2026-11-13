@@ -1,6 +1,7 @@
 // 管理者画面（M-15〜M-19）。施設のスタッフと ケアマネージャーは それぞれ専用のアカウントで入る。
 // 見られるのは、本人が共有に同意した利用者だけ（N-14）。ケアマネージャーには 担当の利用者だけを出す（M-16）。
 
+import { verifiedAdmin } from './staffAuth';
 import { addDays, ageOn, dayKey, lastDays, startOfDay } from './dates';
 import { caloriesKcal, distanceKm } from './health';
 import { OTHER_CARE_MANAGER_ID, SAMPLE_CARE_MANAGER_ID, SAMPLE_FACILITY_ID } from './sampleData';
@@ -43,13 +44,7 @@ export function careManagerName(id: string | null): string | null {
 }
 
 export function findAdmin(id: string | null): AdminAccount | null {
-  return ADMIN_ACCOUNTS.find((a) => a.id === id) ?? null;
-}
-
-/** IDとパスワードが合えば そのアカウント。どちらが合わなかったかは 返さない（N-13） */
-export function checkAdminLogin(id: string, password: string): AdminAccount | null {
-  const account = ADMIN_ACCOUNTS.find((a) => a.id === id.normalize('NFKC').trim());
-  return account && account.password === password ? account : null;
+  return verifiedAdmin(id);
 }
 
 /** そのアカウントで 見られる利用者 */

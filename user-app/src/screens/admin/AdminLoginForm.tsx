@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { FieldMessage } from '../../components/FieldMessage';
 import pressable from '../../components/pressable.module.css';
-import { checkAdminLogin } from '../../lib/admin';
+import { authenticateStaff } from '../../lib/staffAuth';
+import { useAppState } from '../../flow/AppState';
 import { setAdminSession } from '../../lib/store';
 import type { AdminAccount } from '../../lib/types';
 import s from './adminLogin.module.css';
@@ -16,7 +17,10 @@ interface AdminLoginFormProps {
  * どちらが合わなかったかは 出さない。パスワードは「表示」で 見て確かめられる。
  */
 export function AdminLoginForm({ variant, onSuccess }: AdminLoginFormProps) {
-  const [accountId, setAccountId] = useState('');
+  const { loginDraft, resetLogin, navigate } = useAppState();
+  const [accountId, setAccountId] = useState(loginDraft.name);
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,24 +29,38 @@ export function AdminLoginForm({ variant, onSuccess }: AdminLoginFormProps) {
   const prefix = `admin-${variant}`;
 
   useEffect(() => {
-    idRef.current?.focus({ preventScroll: true });
+    (loginDraft.name ? passwordRef : idRef).current?.focus({ preventScroll: true });
   }, []);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (pending.current) return;
     if (accountId.trim() === '' || password === '') {
       setError('アカウントIDと パスワードを 入れてください');
       (accountId.trim() === '' ? idRef : passwordRef).current?.focus();
       return;
     }
-    const account = checkAdminLogin(accountId, password);
+    pending.current = true;
+    setBusy(true);
+    setError(null);
+    setAdminSession(null);
+    try {
+    const account = await authenticateStaff(accountId, password);
     if (!account) {
       setError('アカウントIDか パスワードが ちがいます');
       passwordRef.current?.select();
       return;
     }
     setAdminSession(account.id);
+    resetLogin();
+    setPassword('');
     onSuccess(account);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'ログインできませんでした');
+    } finally {
+      pending.current = false;
+      setBusy(false);
+    }
   };
 
   const onEdit = () => {
@@ -63,6 +81,8 @@ export function AdminLoginForm({ variant, onSuccess }: AdminLoginFormProps) {
         className={s.input}
         type="text"
         value={accountId}
+        disabled={busy}
+        readOnly={Boolean(loginDraft.name)}
         autoComplete="username"
         autoCapitalize="none"
         autoCorrect="off"
@@ -93,6 +113,7 @@ export function AdminLoginForm({ variant, onSuccess }: AdminLoginFormProps) {
           className={`${s.input} ${s.passwordInput}`}
           type={showPassword ? 'text' : 'password'}
           value={password}
+          disabled={busy}
           autoComplete="current-password"
           autoCapitalize="none"
           autoCorrect="off"
@@ -123,8 +144,11 @@ export function AdminLoginForm({ variant, onSuccess }: AdminLoginFormProps) {
         </div>
       )}
 
-      <button type="submit" className={`${pressable.pressable} ${pressable.green} ${s.submit}`}>
-        ログイン
+      <button disabled={busy} type="submit" className={`${pressable.pressable} ${pressable.green} ${s.submit}`}>
+        {busy ? '確認中…' : 'ログイン'}
+      </button>
+      <button type="button" disabled={busy} onClick={() => { setAdminSession(null); navigate('login-name'); }}>
+        お名前・管理者IDの入力に戻る
       </button>
 
       <p className={s.note}>

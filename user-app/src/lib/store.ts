@@ -2,6 +2,7 @@
 // 利用者アプリと管理者画面が 同じデータを使う（3章「同じデータを使う」）。
 // 試作ではブラウザの中に保存する。本実装では この関数をサーバーのAPIに置きかえる。
 
+import { clearVerifiedAdmin } from './staffAuth';
 import { useSyncExternalStore } from 'react';
 import { dayKey, now as currentTime } from './dates';
 import { clearPending, newGame, walk } from './game';
@@ -259,6 +260,7 @@ export function updateProfile(id: string, patch: Partial<Pick<AppUser, 'name' | 
 // ---------- 管理者画面 ----------
 
 export function setAdminSession(accountId: string | null): void {
+  if (accountId === null) clearVerifiedAdmin();
   commit({ ...state, adminSessionId: accountId });
 }
 

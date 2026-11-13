@@ -13,10 +13,11 @@ interface TextFieldProps {
   maxLength?: number;
   autoComplete?: string;
   error?: string | null;
+  disabled?: boolean;
 }
 
 /** 入力欄：入力中は緑のふち（Figma 部品：入力） */
-export function TextField({ id, label, value, onChange, onSubmit, placeholder, maxLength, autoComplete, error }: TextFieldProps) {
+export function TextField({ id, label, value, onChange, onSubmit, placeholder, maxLength, autoComplete, error, disabled }: TextFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export function TextField({ id, label, value, onChange, onSubmit, placeholder, m
         id={id}
         className={styles.input}
         type="text"
+        disabled={disabled}
         value={value}
         placeholder={placeholder}
         maxLength={maxLength}

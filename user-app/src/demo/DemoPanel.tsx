@@ -2,7 +2,7 @@ import { STOP_AFTER_MS, UNLOCK_DELAY_MS, useAppState } from '../flow/AppState';
 import type { MotionSignal } from '../lib/motion';
 import type { MotionAccess } from '../lib/permissions';
 import { ALL_ROUTES, routeInfo, type RouteId } from '../flow/routes';
-import { ADMIN_ACCOUNTS, canSeeUser, findAdmin, ROLE_LABEL } from '../lib/admin';
+import { canSeeUser, findAdmin, ROLE_LABEL } from '../lib/admin';
 import { dayKey, now } from '../lib/dates';
 import { formatSteps } from '../lib/health';
 import { fillSampleHistory, findUser, getStore, loginAs, resetAll, setAdminSession } from '../lib/store';
@@ -102,23 +102,13 @@ export function DemoPanel() {
     const group = routeInfo(id).group;
     if (group === 'app' && !getStore().sessionUserId) loginAs(SAMPLE_USER_ID);
     if ((group === 'admin' || group === 'admin-pc') && !ADMIN_LOGIN_ROUTES.includes(id)) {
-      let account = findAdmin(getStore().adminSessionId);
-      if (!account) {
-        // スマホ版は ケアマネージャー、PC版は 施設スタッフ（Figma と同じ）
-        account = ADMIN_ACCOUNTS.find((a) => a.role === (group === 'admin' ? 'careManager' : 'staff'))!;
-        setAdminSession(account.id);
-      }
+      const account = findAdmin(getStore().adminSessionId);
+      if (!account) return;
       const selected = findUser(adminUserId);
       if ((id === 'admin-user' || id === 'admin-pc-user') && (!selected || !canSeeUser(account, selected))) {
         setAdminUserId(SAMPLE_USER_ID);
       }
     }
-  };
-
-  const enterAdmin = (accountId: string, pc: boolean) => {
-    setAdminSession(accountId);
-    setAdminUserId(null);
-    navigate(pc ? 'admin-pc-list' : 'admin-list');
   };
 
   const reset = () => {
@@ -196,28 +186,11 @@ export function DemoPanel() {
       </section>
 
       <section className={styles.section}>
-        <h3 className={styles.sectionTitle}>管理者のアカウント（運営者が発行・デモ用）</h3>
-        <ul className={styles.accounts}>
-          {ADMIN_ACCOUNTS.map((a) => (
-            <li key={a.id} className={styles.account}>
-              <p>
-                <strong>{a.name}</strong>（{ROLE_LABEL[a.role]}）
-              </p>
-              <p className={styles.credential}>
-                ID <code>{a.id}</code> ／ パスワード <code>{a.password}</code>
-              </p>
-              <div className={styles.accountButtons}>
-                <button type="button" className={styles.small} onClick={() => enterAdmin(a.id, false)}>
-                  スマホ版で入る
-                </button>
-                <button type="button" className={styles.small} onClick={() => enterAdmin(a.id, true)}>
-                  PC版で入る
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <p className={styles.note}>ケアマネージャーには 担当の6人、施設スタッフには 施設の12人が 出ます（共有に同意した人だけ）。</p>
+        <h3 className={styles.sectionTitle}>管理者ログイン</h3>
+        <p className={styles.note}>Supabaseに登録された管理者IDとパスワードでログインしてください。</p>
+        <button type="button" className={styles.action} onClick={() => { setAdminSession(null); resetLogin(); navigate('login-name'); }}>
+          ログイン画面へ
+        </button>
       </section>
 
       {GROUPS.map((group) => (
@@ -280,4 +253,5 @@ export function DemoPanel() {
     </aside>
   );
 }
+
 
