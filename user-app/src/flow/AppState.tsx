@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { findAdmin } from '../lib/admin';
 import { dayKey, now } from '../lib/dates';
-import { checkMotionAccess, requestSensorPermissions, type MotionAccess } from '../lib/permissions';
+import type { MotionSignal } from '../lib/motion';
+import { checkMotionAccess, recheckMotionAccess, requestSensorPermissions, watchAccelerometer, type MotionAccess } from '../lib/permissions';
 import { readJson, writeJson } from '../lib/storage';
 import { ensureSampleData, findUser, getStore, recordSteps, useStore } from '../lib/store';
 import type { AdminAccount, AppUser, Birthday, Gender, ShareConsent } from '../lib/types';
@@ -88,6 +89,10 @@ interface AppState {
   motionAccess: MotionAccess;
   /** ボタンを押したときに 許可を求める（iPhone）。ボタン操作の中で 最初に呼ぶ */
   allowMotion: () => Promise<MotionAccess>;
+  /** 体の動きの値が 届いているか（Android で 設定を止めていると 届かない） */
+  motionSignal: MotionSignal;
+  /** 「もう一度 たしかめる」：許可を調べなおし、値が届くかを 見なおす。ボタン操作の中で 最初に呼ぶ */
+  recheckMotion: () => Promise<MotionAccess>;
   /** L-03「合言葉の文字」を使うか（16章：ローマ字1文字を入れることに決定。デモでは切りかえられる） */
   useLoginLetter: boolean;
   setUseLoginLetter: (value: boolean) => void;
@@ -151,6 +156,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   /** 数えたが まだ記録していない歩数 */
   const pendingSteps = useRef<{ userId: string | null; steps: number }>({ userId: null, steps: 0 });
   const [motionAccess, setMotionAccess] = useState<MotionAccess>('checking');
+  const accessRef = useRef<MotionAccess>('checking');
+  /** 調べた順番。開いたとき・ボタン・調べなおしが 重なったときに 古い結果を捨てる */
+  const accessSeq = useRef(0);
+  const [motionSignal, setMotionSignal] = useState<MotionSignal>('unknown');
+  /** ふやすと センサーを聞きなおす（値が届くかを 最初から見なおす） */
+  const [sensorRestart, setSensorRestart] = useState(0);
   const [pageVisible, setPageVisible] = useState(() => document.visibilityState !== 'hidden');
 
   useEffect(() => {
@@ -293,22 +304,41 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [stopWalking],
   );
 
-  const allowMotion = useCallback(async () => {
-    const access = await requestSensorPermissions();
-    setMotionAccess(access);
+  /** 調べた結果を 入れる（あとから始めた 調べが 先に終わっていたら 捨てる） */
+  const applyAccess = useCallback(async (pending: Promise<MotionAccess>) => {
+    const seq = ++accessSeq.current;
+    const access = await pending;
+    if (seq === accessSeq.current) {
+      accessRef.current = access;
+      setMotionAccess(access);
+    }
     return access;
   }, []);
 
+  // iPhone では ボタン操作の中で 最初に requestSensorPermissions を呼ぶ（その前に await を はさまない）
+  const allowMotion = useCallback(() => applyAccess(requestSensorPermissions()), [applyAccess]);
+
+  const recheckMotion = useCallback(() => {
+    const pending = requestSensorPermissions();
+    setMotionSignal('unknown');
+    setSensorRestart((n) => n + 1);
+    return applyAccess(pending);
+  }, [applyAccess]);
+
   // 開いたときに 数えられるかを調べる（iPhone で まだ許可していなければ ボタンを出す）
   useEffect(() => {
-    let alive = true;
-    void checkMotionAccess().then((access) => {
-      if (alive) setMotionAccess(access);
-    });
-    return () => {
-      alive = false;
-    };
-  }, []);
+    void applyAccess(checkMotionAccess());
+    // StrictMode の2回目でも 番号が新しいほうだけが 入る
+  }, [applyAccess]);
+
+  /** ボタン操作なしで 調べなおす。調べなおさないときは 番号も進めない（先に始めた調べの結果を 捨てないため） */
+  const recheckQuietly = useCallback(() => {
+    const pending = recheckMotionAccess(accessRef.current);
+    if (pending) void applyAccess(pending);
+  }, [applyAccess]);
+
+  // Android で サイトの設定（モーション センサー）を かえたら 調べなおす
+  useEffect(() => watchAccelerometer(recheckQuietly), [recheckQuietly]);
 
   // 画面が隠れると 値が届かなくなる。数えた分を記録して、すぐに使えるようにもどす
   useEffect(() => {
@@ -322,11 +352,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         if (walkRef.current !== 'idle') setWalk('idle');
       } else {
         showResultIfAny();
+        // 設定を直して もどってきたときのために 調べなおす
+        recheckQuietly();
       }
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, [showResultIfAny]);
+  }, [showResultIfAny, recheckQuietly]);
 
   // ログアウトしたときや ほかの人に かわったときは 歩いている状態を やめる（前の人の歩数は 前の人に入れる）
   const userId = user?.id ?? null;
@@ -341,7 +373,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [userId, walk]);
 
   // 数えるのは ログインしている間だけ。歩数を確かめる画面（チーム用）は 自分で数えるので ここでは数えない
-  useStepSensor(motionAccess === 'granted' && userId !== null && pageVisible && routeInfo(route).group !== 'check', onSensorSteps);
+  useStepSensor(motionAccess === 'granted' && userId !== null && pageVisible && routeInfo(route).group !== 'check', onSensorSteps, {
+    onSignal: setMotionSignal,
+    restartKey: sensorRestart,
+  });
 
   useEffect(
     () => () => {
@@ -371,12 +406,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       walkDemoSteps,
       motionAccess,
       allowMotion,
+      motionSignal,
+      recheckMotion,
       useLoginLetter,
       setUseLoginLetter,
       registerOrder: registerSteps(useLoginLetter),
       loginOrder: loginSteps(useLoginLetter),
     }),
-    [route, navigate, registration, updateRegistration, resetRegistration, loginDraft, updateLogin, resetLogin, user, admin, adminUserId, setAdminUserId, walk, startWalking, stopWalking, walkDemoSteps, motionAccess, allowMotion, useLoginLetter, setUseLoginLetter],
+    [route, navigate, registration, updateRegistration, resetRegistration, loginDraft, updateLogin, resetLogin, user, admin, adminUserId, setAdminUserId, walk, startWalking, stopWalking, walkDemoSteps, motionAccess, allowMotion, motionSignal, recheckMotion, useLoginLetter, setUseLoginLetter],
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
