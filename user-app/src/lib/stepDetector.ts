@@ -20,8 +20,13 @@ export interface MotionSample {
 }
 
 export interface StepOptions {
-  /** なめらかにするとき 平均する 点の数 */
+  /** なめらかにするとき 平均する 点の数（いちばん多くて） */
   smoothCount: number;
+  /**
+   * なめらかにするとき 平均する 時間の幅（ミリ秒）。1秒に 60回 届く iPhone・Android の Chrome では 4点、
+   * 1秒に 10回ほどしか 届かない ブラウザ（Firefox など）では 1点だけになり、山が ならされて 消えないようにする
+   */
+  smoothMs: number;
   /** 重力の分を ならす はやさ（ミリ秒。大きいほど ゆっくり ついてくる） */
   baselineMs: number;
   /** 平均より これだけ上の山を 1歩とする（m/s²） */
@@ -38,14 +43,29 @@ export interface StepOptions {
 
 export const DEFAULT_STEP_OPTIONS: StepOptions = {
   smoothCount: 4,
+  // 1秒に 60回（約17ms ごと）の 4点は 約50ms。届く時刻の ゆれに 余裕をもたせて 75ms
+  smoothMs: 75,
   baselineMs: 1000,
-  // iPhone の実機で 実際の歩数と くらべ、1.0 が いちばん近かった（11/6。はじめの案は 1.2）
-  threshold: 1.0,
+  // iPhone と Android の実機で 実際の歩数と くらべ、1.2 が いちばん近かった（11/6）
+  threshold: 1.2,
   minGapMs: 250,
   maxGapMs: 2000,
   confirmSteps: 4,
   resetGapMs: 1000,
 };
+
+/** 端末の種類（しきい値を 分けるときのため。判定は platform.ts の detectOs だけで行う） */
+export type MotionOs = 'ios' | 'android' | 'other';
+
+/**
+ * 端末ごとの しきい値。iPhone と Android の実機で くらべて、どちらも 1.2 が いちばん近かったので 分けない（11/6・16章）。
+ * 機種によって ちがいが見つかったら ここで分ける
+ */
+export const THRESHOLD_BY_OS: Record<MotionOs, number> = { ios: 1.2, android: 1.2, other: 1.2 };
+
+export function stepOptionsFor(os: MotionOs): StepOptions {
+  return { ...DEFAULT_STEP_OPTIONS, threshold: THRESHOLD_BY_OS[os] };
+}
 
 export interface StepDetector {
   /** 値を1つ入れて、いま足す歩数を返す */
@@ -57,7 +77,7 @@ export interface StepDetector {
 
 export function createStepDetector(options: Partial<StepOptions> = {}): StepDetector {
   const o: StepOptions = { ...DEFAULT_STEP_OPTIONS, ...options };
-  let recent: number[] = [];
+  let recent: { t: number; m: number }[] = [];
   let lastT: number | null = null;
   let smoothed = 0;
   let baseline: number | null = null;
@@ -83,9 +103,10 @@ export function createStepDetector(options: Partial<StepOptions> = {}): StepDete
     const dt = lastT === null ? 0 : t - lastT;
     lastT = t;
 
-    recent.push(Math.sqrt(x * x + y * y + z * z));
-    if (recent.length > o.smoothCount) recent.shift();
-    smoothed = recent.reduce((sum, v) => sum + v, 0) / recent.length;
+    // いまの点は かならず入れ、smoothMs より古い点と smoothCount を こえる点は 外す
+    recent.push({ t, m: Math.sqrt(x * x + y * y + z * z) });
+    recent = recent.filter((p) => p.t === t || t - p.t < o.smoothMs).slice(-o.smoothCount);
+    smoothed = recent.reduce((sum, p) => sum + p.m, 0) / recent.length;
     baseline = baseline === null ? smoothed : baseline + (smoothed - baseline) * Math.min(1, dt / o.baselineMs);
 
     const diff = smoothed - baseline;

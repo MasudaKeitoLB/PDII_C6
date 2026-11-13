@@ -2,7 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { countSteps, createStepDetector, type MotionSample } from './stepDetector.ts';
+import { countSteps, createStepDetector, stepOptionsFor, THRESHOLD_BY_OS, type MotionSample } from './stepDetector.ts';
 
 const RATE = 60;
 const G = 9.8;
@@ -16,21 +16,42 @@ function noiseSource(seed = 1) {
   };
 }
 
-/** 1秒に hz 歩、amp の強さで steps 歩 歩いたときの 値の列 */
-function walking({ steps, hz = 2, amp = 3, noise = 0.2, start = 0 }: { steps: number; hz?: number; amp?: number; noise?: number; start?: number }): MotionSample[] {
+/**
+ * 1秒に hz 歩、amp の強さで steps 歩 歩いたときの 値の列。
+ * rate は 1秒に届く回数（iPhone・Chrome は 60、Firefox は 10 ほど）、jitterMs は 届く時刻の ゆれ
+ */
+function walking({
+  steps,
+  hz = 2,
+  amp = 3,
+  noise = 0.2,
+  start = 0,
+  rate = RATE,
+  jitterMs = 0,
+}: {
+  steps: number;
+  hz?: number;
+  amp?: number;
+  noise?: number;
+  start?: number;
+  rate?: number;
+  jitterMs?: number;
+}): MotionSample[] {
   const rand = noiseSource(steps * 7 + 3);
-  const count = Math.round((steps / hz) * RATE);
+  const count = Math.round((steps / hz) * rate);
   return Array.from({ length: count }, (_, i) => {
-    const sec = i / RATE;
+    const sec = i / rate + (rand() * 2 * jitterMs) / 1000;
     return { t: start + sec * 1000, x: rand() * noise, y: G + amp * Math.sin(2 * Math.PI * hz * sec) + rand() * noise, z: rand() * noise };
   });
 }
 
 /** じっとしているとき */
-function resting(ms: number, start = 0, noise = 0.3): MotionSample[] {
+function resting(ms: number, start = 0, noise = 0.3, rate = RATE): MotionSample[] {
   const rand = noiseSource(5);
-  return Array.from({ length: Math.round((ms / 1000) * RATE) }, (_, i) => ({ t: start + (i * 1000) / RATE, x: rand() * noise, y: G + rand() * noise, z: rand() * noise }));
+  return Array.from({ length: Math.round((ms / 1000) * rate) }, (_, i) => ({ t: start + (i * 1000) / rate, x: rand() * noise, y: G + rand() * noise, z: rand() * noise }));
 }
+
+const near = (n: number, expected: number, range = 1) => assert.ok(Math.abs(n - expected) <= range, `${n}歩（${expected}±${range} のはず）`);
 
 /** 時刻 at に 幅のせまい山を1つ */
 function bump(sec: number, at: number, amp: number, widthSec = 0.05) {
@@ -117,6 +138,55 @@ test('⑫ 立ち止まって（値は届いたまま）また歩くと、もう�
   const added = again.map((s) => detector.push(s)).filter((n) => n > 0);
   assert.equal(added[0], 4);
   assert.ok(Math.abs(added.reduce((a, b) => a + b, 0) - 8) <= 1);
+});
+
+// ---- Android版：1秒に届く回数が ちがう ブラウザ ----
+
+test('⑬ 1秒に 10回しか届かなくても 20歩（±1）', () => {
+  near(countSteps(walking({ steps: 20, rate: 10 })), 20);
+});
+
+test('⑭ 1秒に 20回・30回でも 20歩（±1）', () => {
+  near(countSteps(walking({ steps: 20, rate: 20 })), 20);
+  near(countSteps(walking({ steps: 20, rate: 30 })), 20);
+});
+
+test('⑮ 1秒に 10回で ゆっくり歩いても 20歩（±1）', () => {
+  near(countSteps(walking({ steps: 20, hz: 1.2, amp: 1.8, rate: 10 })), 20);
+});
+
+test('⑯ 1秒に 10回でも、じっとしている・手で2回ゆらすだけは 数えない', () => {
+  assert.equal(countSteps(resting(5000, 0, 0.3, 10)), 0);
+  const shake = Array.from({ length: 30 }, (_, i) => {
+    const sec = i / 10;
+    return { t: sec * 1000, x: 0, y: G + bump(sec, 0.5, 6, 0.15) + bump(sec, 1.0, 6, 0.15), z: 0 };
+  });
+  assert.equal(countSteps(shake), 0);
+});
+
+test('⑰ 1秒に 60回のときは、時間の幅を入れる前と 同じ数になる（iPhone で決めた結果を 変えない）', () => {
+  const samples = [
+    walking({ steps: 20, hz: 2, amp: 3 }),
+    walking({ steps: 20, hz: 1.2, amp: 1.8 }),
+    walking({ steps: 20, hz: 2, amp: 1.6 }),
+    [...walking({ steps: 8 }), ...resting(3000, 8 * 500), ...walking({ steps: 8, start: 8 * 500 + 3000 })],
+  ];
+  for (const s of samples) assert.equal(countSteps(s), countSteps(s, { smoothMs: Infinity }));
+});
+
+test('⑱ 1秒に 60回で 届く時刻が ±3ms ゆれても 同じ数', () => {
+  const steady = countSteps(walking({ steps: 20 }));
+  assert.equal(countSteps(walking({ steps: 20, jitterMs: 3 })), steady);
+});
+
+test('⑲ Firefox のように 90〜110ms ごとに届いても 20歩（±1）', () => {
+  near(countSteps(walking({ steps: 20, rate: 10, jitterMs: 10 })), 20);
+});
+
+test('⑳ 端末ごとの しきい値は どれも 1.2（iPhone・Android の実機で決めた値）', () => {
+  assert.deepEqual(THRESHOLD_BY_OS, { ios: 1.2, android: 1.2, other: 1.2 });
+  assert.equal(stepOptionsFor('android').threshold, 1.2);
+  assert.equal(stepOptionsFor('ios').threshold, 1.2);
 });
 
 test('⑩ しきい値を上げると 小さな ゆれは 数えない', () => {
