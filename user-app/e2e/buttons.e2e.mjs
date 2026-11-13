@@ -1,5 +1,5 @@
 // 全ボタンの動作テスト：画面を実際に押して、押したとおりに動くかを確かめる。
-// 使い方：開発サーバー（npm run dev）を起動したまま `npm run e2e`。別のアドレスは BASE=http://…/ で指定。
+// 使い方：動作テスト用の開発サーバー（npm run dev:e2e。接続の値が入らない）を起動したまま `npm run e2e`。別のアドレスは BASE=http://…/ で指定。
 // ブラウザは入っている Chrome を使う（E2E_CHANNEL=msedge で Edge）。
 
 import { chromium } from 'playwright-core';

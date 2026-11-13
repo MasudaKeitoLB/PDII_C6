@@ -4,3 +4,11 @@ dist-demo
 artifact
 *.local
 *.tsbuildinfo
+
+# サーバーの接続の値（.env.local など）は git に入れない。
+# 入れてよいのは、値の入っていない下の3つだけ。
+.env
+.env.*
+!.env.example
+!.env.e2e
+!.env.demo

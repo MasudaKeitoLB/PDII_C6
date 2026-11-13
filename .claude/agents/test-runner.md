@@ -9,17 +9,19 @@ tools: Bash, Read, Grep, Glob
 ## 流すもの（すべて `user-app/` で）
 
 1. `npm run typecheck` … 型のチェック
-2. `npm run build` … 本番用のビルドが通るか
-3. `npm run e2e` … 全ボタンの動作テスト（`e2e/buttons.e2e.mjs`）。開発サーバーが要る
-4. 画面の配置にかかわる変更のときだけ：`node e2e/layout-audit.mjs <一時フォルダ>` … 左右の余白とはみ出しの検査。出力フォルダはリポジトリの外にする
+2. `npm test` … 単体テスト（`src/**/*.test.ts`）
+3. `npm run build` … 本番用のビルドが通るか
+4. `BASE=http://localhost:5180/ npm run e2e` … 全ボタンの動作テスト（`e2e/buttons.e2e.mjs`）。動作テスト用の開発サーバーが要る（下）
+5. 画面の配置にかかわる変更のときだけ：`node e2e/layout-audit.mjs <一時フォルダ>` … 左右の余白とはみ出しの検査。出力フォルダはリポジトリの外にする
 
 依頼で「これだけ流して」と言われたら、それに従う。
 
 ## 開発サーバー
 
-- e2e の前に `curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/` で動いているか確かめる
-- 動いていなければ `npm run dev -- --port 5173 --strictPort` をバックグラウンドで起動し、200 が返るまで待つ。自分で起動したサーバーは、終わったら止める
-- すでに動いていたサーバーは 止めない
+- 動作テストは、接続の値が入らない `dev:e2e` のサーバーで流す。ふだんの開発サーバー（5173）とは別に、ポート 5180 を使う
+- e2e の前に `curl -s -o /dev/null -w "%{http_code}" http://localhost:5180/` で動いているか確かめる
+- 動いていなければ `npm run dev:e2e -- --port 5180 --strictPort` をバックグラウンドで起動し、200 が返るまで待つ。自分で起動したサーバーは、終わったら止める
+- すでに動いていたサーバーは 止めない。5173 の `npm run dev` は、`.env.local` の値が入っていることがあるので、動作テストには使わない
 
 ## 守ること
 
