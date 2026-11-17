@@ -1,4 +1,4 @@
-/* H-02：紺の画面。上から 歩いています（192×44）→ 絵 → 文 → 下の台（353×64） */
+/* H-02：紺の画面。上から 歩いています（192×44）→ 道の場面（WalkScene・walkScene.module.css）→ 文 → 下の台（353×64） */
 .lock {
   position: absolute;
   inset: 0;
@@ -40,10 +40,6 @@
   background: var(--color-navy-2);
   font-size: 19px;
   font-weight: 700;
-}
-
-.picture {
-  margin-top: 75.3px;
 }
 
 .headline {

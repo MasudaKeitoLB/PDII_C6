@@ -1,0 +1,121 @@
+/* 敵ごとの 動きの型（src/data/enemyMotions.ts）。どれも 小さく・ゆっくり。点滅は しない。
+   keyframes の はじめと おわりは ふつうの 形（動きを へらす で 0.01秒に なっても かたむいたまま 止まらない）。
+   動きを へらす ときは global.css で 止まる */
+
+.motion {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  transform-origin: 50% 100%;
+}
+
+/* ふわふわ浮く：4px だけ 上下（3.2秒で 1回） */
+.float {
+  animation: motion-float 3.2s ease-in-out infinite;
+}
+@keyframes motion-float {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* ぴょんと跳ねる：少し 休んでから 6px 跳ねて、小さく もう1回 */
+.hop {
+  animation: motion-hop 2.4s ease-out infinite;
+}
+@keyframes motion-hop {
+  0%,
+  55%,
+  100% {
+    transform: none;
+  }
+  66% {
+    transform: translateY(-6px);
+  }
+  76% {
+    transform: none;
+  }
+  82% {
+    transform: translateY(-2px);
+  }
+  88% {
+    transform: none;
+  }
+}
+
+/* ゆらゆら揺れる：足もとを 中心に 左右へ 3度 */
+.sway {
+  animation: motion-sway 3s ease-in-out infinite;
+}
+@keyframes motion-sway {
+  0%,
+  100% {
+    transform: none;
+  }
+  25% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+
+/* ゆっくり回る：まん中を 中心に 12秒で ひとまわり */
+.spin {
+  transform-origin: 50% 50%;
+  animation: motion-spin 12s linear infinite;
+}
+@keyframes motion-spin {
+  from {
+    transform: none;
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ほのかに光る：体の うしろの 金の 光（別の 層）が 3.6秒かけて ゆっくり 明るくなり、もどる（点滅に しない）。
+   動かすのは 光の 層の opacity だけ（絵に filter を かけつづけない） */
+.glowLight {
+  position: absolute;
+  inset: -8px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 197 61 / 0.6) 0 35%, rgb(255 197 61 / 0) 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+.glow .glowLight {
+  animation: motion-glow 3.6s ease-in-out infinite;
+}
+@keyframes motion-glow {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* ぽたぽた：下に 少し つぶれて もどる（しずくが おちる ような） */
+.drip {
+  animation: motion-drip 2.6s ease-in-out infinite;
+}
+@keyframes motion-drip {
+  0%,
+  60%,
+  100% {
+    transform: none;
+  }
+  72% {
+    transform: scale(1.04, 0.94);
+  }
+  84% {
+    transform: scale(0.98, 1.02);
+  }
+}

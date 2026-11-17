@@ -1,0 +1,79 @@
+/* 敵の HPバー：紺の 小さな 台に、バー（ふち 白 2px・地 紺）と「あと ○歩」を 横に ならべる。
+   文字の大きさで 文字も バーも 大きく・太くなる */
+.hp {
+  --hp-h: 8px;
+  --hp-w: 56px;
+  --hp-fs: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px 4px 6px;
+  border-radius: 12px;
+  background: rgb(27 34 64 / 0.82);
+  color: var(--color-white);
+  font-size: var(--hp-fs);
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+:root[data-text-size="large"] .hp {
+  --hp-h: 10px;
+  --hp-w: 60px;
+  --hp-fs: 17px;
+}
+:root[data-text-size="xlarge"] .hp {
+  --hp-h: 12px;
+  --hp-w: 64px;
+  --hp-fs: 19px;
+}
+
+/* ボス：長くて 4px 太い */
+.boss {
+  --hp-w: 96px;
+}
+:root[data-text-size="large"] .boss {
+  --hp-w: 96px;
+}
+:root[data-text-size="xlarge"] .boss {
+  --hp-w: 76px;
+}
+
+.track {
+  position: relative;
+  flex: none;
+  width: var(--hp-w);
+  height: var(--hp-h);
+  border: 2px solid var(--color-white);
+  border-radius: 3px;
+  background: var(--color-navy-deep);
+  overflow: hidden;
+  box-sizing: content-box;
+}
+.boss .track {
+  height: calc(var(--hp-h) + 4px);
+}
+/* レア：ふちも 金 */
+.rare .track {
+  border-color: var(--color-gold);
+}
+
+/* せまい 所：バーだけ ちぢむ（36px まで） */
+.shrink {
+  min-width: 0;
+}
+.shrink .track {
+  flex: 0 1 var(--hp-w);
+  min-width: 36px;
+}
+
+.fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.num {
+  flex: none;
+}

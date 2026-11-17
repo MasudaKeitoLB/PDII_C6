@@ -15,6 +15,8 @@ export const DEMO_PANEL_RESERVE = 300 + 40 + 32;
 const SAMPLE_USER_ID = 's-yamada';
 /** 「歩いたことにする」歩数：Figma の H-03（2,345歩・3体）と H-04（レベル12→13）に なる */
 const DEMO_WALK_STEPS = 2345;
+/** 1万歩（デモ用）：ボスの手前まで 大きく進めて、ボスや エリアをこえる 動きを 確かめるため */
+const DEMO_BIG_WALK_STEPS = 10000;
 
 /** 体の動きで 歩数を数えられるか（スマホでは 体の動きで、PC では 下のボタンで 歩く） */
 const MOTION_LABEL: Record<MotionAccess, string> = {
@@ -183,6 +185,9 @@ export function DemoPanel() {
           )}
           <button type="button" className={styles.action} disabled={!user || walk !== 'idle'} onClick={() => walkDemoSteps(DEMO_WALK_STEPS)}>
             {formatSteps(DEMO_WALK_STEPS)}歩 歩いて 止まったことにする（H-03・H-04）
+          </button>
+          <button type="button" className={styles.action} disabled={!user || walk !== 'idle'} onClick={() => walkDemoSteps(DEMO_BIG_WALK_STEPS)}>
+            {formatSteps(DEMO_BIG_WALK_STEPS)}歩 歩いて 止まったことにする（デモ用）
           </button>
           {user && !user.sample && (
             <button type="button" className={styles.action} onClick={() => fillSampleHistory(user.id)}>

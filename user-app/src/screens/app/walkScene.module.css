@@ -1,0 +1,138 @@
+/* H-02 歩行中の 道の場面（段階B）：はばいっぱい・高さ 190px。
+   上から 空（エリアの色）→ 遠くの景色（ゆっくり）→ 近くの 道の帯（少し速く）→ 主人公。
+   流れの 止め方は WalkScene.tsx（walking の間だけ 流れ、止まると ゆっくり 止まる）。
+   動きを へらす ときは data-walk-scene="still"（global.css でも 止まる） */
+.scene {
+  position: relative;
+  flex: none;
+  align-self: stretch;
+  height: 190px;
+  margin: 56px calc(-1 * var(--gutter)) 0;
+  overflow: hidden;
+}
+
+/* 遠くの景色：home-bg（395×420）の 道の上はし（y=250）を 道の帯の 土の上はし（場面の y=165）に そろえる。
+   home-bg の 空は 上を うすくして 消し、山と 木だけを 見せる */
+.far {
+  position: absolute;
+  left: 0;
+  top: -85px;
+  width: 100%;
+  height: 420px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0 118px, #000 168px);
+  mask-image: linear-gradient(to bottom, transparent 0 118px, #000 168px);
+}
+.farTrack {
+  display: flex;
+  width: 1580px;
+  animation: walk-far 60s linear infinite;
+}
+.farTrack img {
+  flex: none;
+  width: 395px;
+  height: 420px;
+}
+/* 左右反転で つなぐと つなぎめが 目立たない */
+.flip {
+  transform: scaleX(-1);
+}
+@keyframes walk-far {
+  from {
+    transform: none;
+  }
+  to {
+    transform: translateX(-790px);
+  }
+}
+
+/* 近くの 道の帯：160×60 を 横に くり返し、2秒で 160px 流す */
+.road {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: calc(100% + 160px);
+  height: 60px;
+  animation: walk-road 2s linear infinite;
+}
+.strip {
+  background-repeat: repeat-x;
+  background-position: 0 0;
+}
+/* 帯が まだ無い エリア：エリアの色の 草と、土の道（40px ごとの 小石の 線）を CSS で描く */
+.cssRoad {
+  background:
+    linear-gradient(90deg, #c9a464 0 12px, transparent 12px) 0 44px / 40px 3px repeat-x,
+    linear-gradient(to bottom, transparent 0 20px, var(--grass, #6cc04a) 20px 35px, #ebcd92 35px 56px, #c9a464 56px);
+}
+@keyframes walk-road {
+  from {
+    transform: none;
+  }
+  to {
+    transform: translateX(-160px);
+  }
+}
+
+/* 主人公：左より（歩いていく 先を 広く 見せる）。足もとは 道の上 */
+.hero {
+  position: absolute;
+  left: calc(38% - 42px);
+  bottom: 8px;
+  width: 85px;
+  height: 110px;
+}
+.hero img {
+  position: absolute;
+  inset: 0;
+}
+
+/* 歩く 4コマ：0.8秒で 1まわり。1コマずつ 0.2秒 見せる（ずらしは style の animation-delay） */
+.frame {
+  opacity: 0;
+  animation: walk-frame 0.8s step-end infinite;
+}
+@keyframes walk-frame {
+  0% {
+    opacity: 1;
+  }
+  25%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* コマが 無いとき：hero.svg を 3px だけ 上下（1歩 0.4秒） */
+.bob {
+  animation: walk-bob 0.4s ease-in-out infinite;
+}
+@keyframes walk-bob {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* 止まった 主人公（止まった・動きを へらす ときだけ 見せる） */
+.stand {
+  visibility: hidden;
+}
+
+/* 止まった：流れを 止めて、立った 絵に する */
+.scene[data-walk-scene="stopped"] [data-walk-anim] {
+  animation-play-state: paused;
+}
+.scene[data-walk-scene="stopped"] [data-walk-anim="hero"],
+.scene[data-walk-scene="still"] [data-walk-anim="hero"] {
+  visibility: hidden;
+}
+.scene[data-walk-scene="stopped"] .stand,
+.scene[data-walk-scene="still"] .stand {
+  visibility: visible;
+}
+/* 動きを へらす：はじめから 止まった 絵 */
+.scene[data-walk-scene="still"] [data-walk-anim] {
+  animation: none;
+}

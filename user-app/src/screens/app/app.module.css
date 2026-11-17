@@ -274,18 +274,16 @@
   justify-content: space-between;
 }
 
-/* ---------- 演出（動きを へらす ときは global.css で 止める） ---------- */
+/* ---------- 次の敵の HPバー ---------- */
 
-/* ホームの 次の敵：2px だけ ゆっくり 上下する（2.8秒で 1回） */
-.enemyIdle {
-  animation: enemy-idle 2.8s ease-in-out infinite;
+/* 頭の上：まん中を 敵に そろえ、下はしを 頭の 少し上に */
+.hpAbove {
+  transform: translate(-50%, -100%);
 }
-@keyframes enemy-idle {
-  0%,
-  100% {
-    transform: none;
-  }
-  50% {
-    transform: translateY(-2px);
-  }
+/* 足もとの下（ボス・文字が とても大きい とき）：x=160〜383 の 箱の中で 右に そろえる。
+   数が 長いときは バーが ちぢみ、主人公（右はし x=152）に 重ならない */
+.hpBelowBox {
+  display: flex;
+  justify-content: flex-end;
+  width: 223px;
 }

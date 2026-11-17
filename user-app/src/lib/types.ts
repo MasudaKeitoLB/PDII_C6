@@ -59,6 +59,11 @@ export interface PendingAdventure {
   toLevel: number;
   /** いま戦っている途中のボス（left：のこりの歩数、total：はじめの歩数）。戦っていなければ null */
   boss: { id: EnemyId; left: number; total: number } | null;
+  /**
+   * この成果を 作りはじめた ときに 戦っていた ボスと、その ときの のこりの歩数（戦闘の HPバーを「前の残り → 今の残り」で 見せる）。
+   * 戦っていなければ null。古い記録には 無いので 任意の項目にし、normalizeGame で うめる
+   */
+  bossBefore?: { id: EnemyId; left: number; total: number } | null;
   /** 今回 こえたエリアの番号 */
   clearedAreas: number[];
   /** 今回 会えたレア */

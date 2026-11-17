@@ -201,6 +201,36 @@ export function upcomingEnemy(game: GameState): EnemyId {
   return encounterAt(game.seed, game.lap, seg.area, encounterIndex(game.pos, seg));
 }
 
+/**
+ * 次の敵（upcomingEnemy）を たおすまで あと何歩か。
+ * 道中・ふりかえりの道は 次の出会いまで（1〜750歩）。ボス・裏ボスと 戦っている間は その のこりの歩数
+ */
+export function stepsToNextEnemy(game: GameState): number {
+  const pos = Math.max(0, game.pos);
+  const seg = segmentAt(pos);
+  if (seg.boss) return seg.end - pos;
+  const from = seg.kind === 'road' ? seg.start : LAP_STEPS;
+  return from + (encounterIndex(pos, seg) + 1) * STEPS_PER_ENEMY - pos;
+}
+
+/** ボス・裏ボスの はじめの歩数（ふつう・レアは 0） */
+export function bossSteps(id: EnemyId): number {
+  const kind = enemyDef(id).kind;
+  if (kind === 'boss') return BOSS_STEPS;
+  return END_BOSSES.find((b) => b.id === id)?.steps ?? 0;
+}
+
+/**
+ * ホームの HPバー：次の敵と、その のこり（left）と いっぱい（total）の歩数。
+ * ふつう・レアは「次の出会いまでの歩数 / 750歩」、ボスは「ボスの のこり / ボスの歩数」
+ */
+export function nextEnemyHp(game: GameState): { id: EnemyId; left: number; total: number; boss: boolean } {
+  const id = upcomingEnemy(game);
+  const boss = bossAt(game.pos);
+  if (boss) return { id, left: boss.left, total: boss.total, boss: true };
+  return { id, left: stepsToNextEnemy(game), total: STEPS_PER_ENEMY, boss: false };
+}
+
 // ---------- 歩く ----------
 
 /** はじめての人の ゲームの記録。seed は 人ごとの種（登録のとき id から作る） */
@@ -222,7 +252,19 @@ export function walk(game: GameState, steps: number): GameState {
   const seen = { ...game.seen };
   const pending: PendingAdventure = game.pending
     ? { ...game.pending, enemies: [...game.pending.enemies], clearedAreas: [...game.pending.clearedAreas], rares: [...game.pending.rares] }
-    : { steps: 0, enemies: [], exp: 0, points: 0, fromLevel: game.level, toLevel: game.level, boss: null, clearedAreas: [], rares: [] };
+    : {
+        steps: 0,
+        enemies: [],
+        exp: 0,
+        points: 0,
+        fromLevel: game.level,
+        toLevel: game.level,
+        boss: null,
+        // 戦闘の HPバーを「前の残り」から 見せるため、作りはじめた ときの ボスの残りを 覚えておく
+        bossBefore: bossAt(game.pos),
+        clearedAreas: [],
+        rares: [],
+      };
 
   const defeat = (id: EnemyId) => {
     const got = pointsFor(id);
@@ -351,6 +393,23 @@ function oldTotalForLevel(level: number): number {
   return (level - 1) * (3000 + 25 * level);
 }
 
+/**
+ * 成果を 作りはじめた ときの ボスの残り（bossBefore）を 直す。
+ * - null（戦っていなかった）は そのまま。正しい形なら のこりを 1〜はじめの歩数に おさめる
+ * - 無い・こわれている ときは「いまの位置 − 成果の歩数」の 所で 戦っていた ボスで うめる（古い記録のため）
+ */
+function normalizeBossBefore(raw: unknown, pos: number, steps: number): PendingAdventure['bossBefore'] {
+  if (raw === null) return null;
+  if (typeof raw === 'object') {
+    const b = raw as Record<string, unknown>;
+    if (isEnemyId(b.id) && bossSteps(b.id) > 0 && typeof b.left === 'number' && Number.isFinite(b.left) && b.left >= 1) {
+      const total = bossSteps(b.id);
+      return { id: b.id, left: Math.min(total, Math.floor(b.left)), total };
+    }
+  }
+  return bossAt(Math.max(0, pos - steps));
+}
+
 function normalizePending(raw: unknown, level: number, fromLevel: number | null, pos: number): PendingAdventure | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const p = raw as Record<string, unknown>;
@@ -359,14 +418,16 @@ function normalizePending(raw: unknown, level: number, fromLevel: number | null,
   const cleared = Array.isArray(p.clearedAreas)
     ? p.clearedAreas.filter((a): a is number => Number.isInteger(a) && a >= 1 && a <= AREAS.length)
     : [];
+  const steps = count(p.steps);
   return {
-    steps: count(p.steps),
+    steps,
     enemies,
     exp: count(p.exp),
     points: count(p.points),
     fromLevel: Math.min(level, Math.max(1, fromLevel ?? count(p.fromLevel, level))),
     toLevel: level,
     boss: bossAt(pos),
+    bossBefore: normalizeBossBefore(p.bossBefore, pos, steps),
     clearedAreas: [...new Set(cleared)],
     rares,
   };

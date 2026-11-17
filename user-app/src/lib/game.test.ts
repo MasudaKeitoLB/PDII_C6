@@ -24,7 +24,9 @@ import {
   placeName,
   resultNotes,
   segmentAt,
+  nextEnemyHp,
   startLap,
+  stepsToNextEnemy,
   stepsToNextLevel,
   upcomingEnemy,
   walk,
@@ -153,7 +155,7 @@ test('出会い：750歩ごとに 1体。まとめて歩いても 分けて歩�
 test('出会い：歩数が 1以上なら 敵が 0体でも 成果を作る。0以下・数でない歩数は 何もしない', () => {
   const g = newGame(1);
   const after = walk(g, 10);
-  assert.deepEqual(after.pending, { steps: 10, enemies: [], exp: 10, points: 0, fromLevel: 1, toLevel: 1, boss: null, clearedAreas: [], rares: [] });
+  assert.deepEqual(after.pending, { steps: 10, enemies: [], exp: 10, points: 0, fromLevel: 1, toLevel: 1, boss: null, bossBefore: null, clearedAreas: [], rares: [] });
   assert.equal(walk(g, 0), g);
   assert.equal(walk(g, -5), g);
   assert.equal(walk(g, Number.NaN), g);
@@ -341,6 +343,7 @@ test('normalizeGame：古い記録の 見ていない成果は 消さない', ()
     fromLevel: levelFromTotal(g.totalSteps - 2345).level,
     toLevel: g.level,
     boss: null,
+    bossBefore: null,
     clearedAreas: [],
     rares: [],
   });
@@ -364,6 +367,8 @@ test('normalizeGame：項目が欠けた記録は 初めの値で うめる', ()
     fromLevel: 12,
     toLevel: 12,
     boss: { id: 'hanafubuki', left: 7000, total: 10_000 },
+    // 前の残りが 無い 古い記録は「いまの位置 − 成果の歩数」（122,900歩）の ボスで うめる
+    bossBefore: { id: 'hanafubuki', left: 7100, total: 10_000 },
     clearedAreas: [],
     rares: [],
   });
@@ -403,7 +408,7 @@ test('normalizeGame：NaN や 負の数・知らない敵が入った記録は�
     exp: 0,
     points: 0,
     seen: { amagumo: 3, donburako: 1 },
-    pending: { steps: 0, enemies: ['amagumo'], exp: 0, points: 0, fromLevel: 1, toLevel: 1, boss: null, clearedAreas: [1], rares: ['donburako'] },
+    pending: { steps: 0, enemies: ['amagumo'], exp: 0, points: 0, fromLevel: 1, toLevel: 1, boss: null, bossBefore: null, clearedAreas: [1], rares: ['donburako'] },
   });
   for (const value of Object.values(g)) if (typeof value === 'number') assert.ok(Number.isFinite(value));
   // 古い形の NaN（JSON では null になる）も 直す
@@ -562,4 +567,87 @@ test('こわれた記録に とても大きな数が入っていても 止まら
   assert.deepEqual(normalizeGame(fixed), fixed);
   // 古い形（v が無い）で レベルが とても大きい記録も 止まらない
   assert.ok(Number.isFinite(normalizeGame({ level: 1e300, exp: 0, points: 0, stepsTowardEnemy: 0, nextEnemy: 0, pending: null }).level));
+});
+
+// ---------- 次の敵まで（ホームの HPバー） ----------
+
+/** pos 歩 進んだ所に いる 記録（成果は 見おわった） */
+const at = (pos: number, seed = 42) => clearPending(walk(newGame(seed), pos));
+
+test('次の敵まで：道中は 次の出会いまで（1〜750歩）。ボス・裏ボスは その のこり', () => {
+  assert.equal(stepsToNextEnemy(newGame(1)), 750);
+  assert.equal(stepsToNextEnemy(at(50)), 700);
+  assert.equal(stepsToNextEnemy(at(749)), 1);
+  assert.equal(stepsToNextEnemy(at(750)), 750);
+  assert.equal(stepsToNextEnemy(at(119_999)), 1);
+  // ボスと 戦っている間は ボスの のこり
+  assert.equal(stepsToNextEnemy(at(120_000)), 10_000);
+  assert.equal(stepsToNextEnemy(at(121_000)), 9000);
+  // 山田さん（28,550歩）は 次の あまぐもまで 700歩
+  const yamada = gameAt(12, 1450, 1280, YAMADA_SEED);
+  assert.equal(stepsToNextEnemy(yamada), 700);
+  // 年こしの峠は 裏ボスの のこり、ふりかえりの道は 次の出会いまで
+  assert.equal(stepsToNextEnemy(at(LAP_STEPS + 100)), 10_700);
+  const after = at(LAP_END + 10);
+  assert.equal(segmentAt(after.pos).kind, 'after');
+  assert.equal(stepsToNextEnemy(after), LAP_STEPS + 64 * 750 - (LAP_END + 10));
+});
+
+test('次の敵まで：その歩数 歩くと 次の敵（upcomingEnemy）を ちょうど 1体 たおす。1歩 少ないと たおさない', () => {
+  // 年こしの峠（LAP_STEPS 〜 LAP_END の 裏ボスの 区間）は 入れない。そこでは 裏ボスと 戦いながら 750歩ごとの 出会いも つづくので、
+  // 裏ボスの のこりの歩数を 歩くと、とちゅうで ふつうの敵にも 会い「ちょうど 1体」に ならない（裏ボスの 数は 上の テストで 確かめる）
+  for (const pos of [0, 1, 375, 749, 28_550, 60_001, 119_250, 120_000, 125_555, 129_999, 300_123, LAP_END, LAP_END + 999]) {
+    const g = at(pos, 7);
+    const left = stepsToNextEnemy(g);
+    assert.ok(left >= 1, `${pos}歩の所で ${left}歩`);
+    if (left > 1) assert.deepEqual(walk(g, left - 1).pending?.enemies, [], `${pos}歩の所で 1歩 少なくても たおした`);
+    assert.deepEqual(walk(g, left).pending?.enemies, [upcomingEnemy(g)], `${pos}歩の所`);
+  }
+});
+
+test('次の敵の HP：ふつうは「次の出会いまで / 750歩」、ボスは「ボスの のこり / 10,000歩」', () => {
+  assert.deepEqual(nextEnemyHp(at(28_550, YAMADA_SEED)), { id: 'amagumo', left: 700, total: 750, boss: false });
+  assert.deepEqual(nextEnemyHp(at(121_000)), { id: 'hanafubuki', left: 9000, total: 10_000, boss: true });
+  assert.deepEqual(nextEnemyHp(at(LAP_STEPS + 800)), { id: 'oomisoka', left: 10_000, total: 10_800, boss: true });
+});
+
+// ---------- ボスの 前の残り（戦闘の HPバー） ----------
+
+test('ボスの前の残り：成果を 作りはじめた ときの ボスの のこりを 覚え、歩きたしても かわらない', () => {
+  // 道中から はじめた 成果は null（ボスに 入っても）
+  assert.equal(walk(newGame(42), 121_000).pending?.bossBefore, null);
+  // ボスの 途中から はじめた 成果は その時の のこり
+  let g = walk(at(121_000), 2000);
+  assert.deepEqual(g.pending?.bossBefore, { id: 'hanafubuki', left: 9000, total: 10_000 });
+  assert.deepEqual(g.pending?.boss, { id: 'hanafubuki', left: 7000, total: 10_000 });
+  g = walk(g, 1000);
+  assert.deepEqual(g.pending?.bossBefore, { id: 'hanafubuki', left: 9000, total: 10_000 }, '歩きたすと かわった');
+  assert.equal(g.pending?.boss?.left, 6000);
+  // 保存して 読みこんでも のこる。2回 通しても 同じ
+  assert.deepEqual(reload(g).pending?.bossBefore, g.pending?.bossBefore);
+  assert.deepEqual(normalizeGame(reload(g)), reload(g));
+  // たおしきっても 前の残りは のこる（戦闘で 9,000 → 0 と 見せる）
+  const done = walk(g, 6000);
+  assert.equal(done.pending?.boss, null);
+  assert.equal(done.pending?.bossBefore?.left, 9000);
+});
+
+test('ボスの前の残り：無い 古い記録は「いまの位置 − 成果の歩数」の ボスで うめ、null は そのまま、こわれた値は 直す', () => {
+  const base = { v: 3, seed: 1, totalSteps: 125_000, lap: 1, pos: 125_000 };
+  const pending = { steps: 2000, enemies: [], exp: 2000, points: 0, fromLevel: 30, toLevel: 30, clearedAreas: [], rares: [] };
+  assert.deepEqual(normalizeGame({ ...base, pending }).pending?.bossBefore, { id: 'hanafubuki', left: 7000, total: 10_000 });
+  // 成果の 歩数が ボスの 前から なら null（ボスは いっぱいから 見せる）
+  assert.equal(normalizeGame({ ...base, pending: { ...pending, steps: 6000 } }).pending?.bossBefore, null);
+  assert.equal(normalizeGame({ ...base, pending: { ...pending, bossBefore: null } }).pending?.bossBefore, null);
+  // 大きすぎる のこりは はじめの歩数に、知らない敵・ふつうの敵・0以下は うめなおす
+  assert.deepEqual(normalizeGame({ ...base, pending: { ...pending, bossBefore: { id: 'hanafubuki', left: 99_999, total: 1 } } }).pending?.bossBefore, {
+    id: 'hanafubuki',
+    left: 10_000,
+    total: 10_000,
+  });
+  for (const broken of [{ id: 'nazo', left: 5 }, { id: 'amagumo', left: 5 }, { id: 'hanafubuki', left: 0 }, { id: 'hanafubuki', left: Number.NaN }, 'x']) {
+    assert.deepEqual(normalizeGame({ ...base, pending: { ...pending, bossBefore: broken } }).pending?.bossBefore, { id: 'hanafubuki', left: 7000, total: 10_000 });
+  }
+  const fixed = normalizeGame({ ...base, pending });
+  assert.deepEqual(normalizeGame(JSON.parse(JSON.stringify(fixed))), fixed);
 });

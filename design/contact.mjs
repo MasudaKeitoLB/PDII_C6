@@ -89,14 +89,69 @@ function html(area) {
   </body></html>`;
 }
 
+// 主人公の コマと 歩く道の 帯の 一覧（node design/contact.mjs hero）
+const SKY = ['#8FD0F2', '#C3D0E0', '#2D3A6B', '#8FD0F2', '#F0C27A', '#1B2240', '#E4DCEF'];
+function heroHtml() {
+  const read = (rel) => readFileSync(join(here, '..', 'user-app', 'src', 'assets', rel), 'utf8');
+  const sized = (svg, k) => {
+    const w = Number(svg.match(/width="([\d.]+)"/)[1]);
+    const h = Number(svg.match(/height="([\d.]+)"/)[1]);
+    return svg.replace(/width="[\d.]+"/, `width="${w * k}"`).replace(/height="[\d.]+"/, `height="${h * k}"`);
+  };
+  const hero = (name, k) => sized(read(`sprite/${name}.svg`), k);
+  const walk = ['hero-walk-1', 'hero-walk-2', 'hero-walk-3', 'hero-walk-4'];
+  const K = 3;
+  const line = (k) => `<div class="foot" style="width:100%;"></div>`;
+  const strips = [1, 2, 3, 4, 5, 6, 7].map((n) => {
+    const s = read(`scene/walk-strip-area${n}.svg`);
+    const one = sized(s, 2);
+    const three = `<div class="rep">${one}${one}${one}</div>`;
+    const heroOn = `<div class="onroad" style="left:300px">${hero(walk[n % 4], 2)}</div>`;
+    return `<div class="stripbox" style="background:${SKY[n - 1]}">${three}${heroOn}</div>
+      <div class="seams"><span style="left:320px">▲つなぎめ</span><span style="left:640px">▲つなぎめ</span></div>`;
+  }).join('');
+  return `<!doctype html><html lang="ja"><head><meta charset="utf-8"><style>
+    body { margin: 0; padding: 16px; width: 1368px; background: #fbf6ea; color: #1e1b18; font-family: "BIZ UDPGothic", Meiryo, sans-serif; }
+    h1 { font-size: 22px; margin: 0 0 8px; } h2 { font-size: 17px; margin: 18px 0 4px; }
+    .panel { background: #fff; border: 2px solid #d9cfbf; padding: 8px; }
+    .line { position: relative; display: flex; align-items: flex-end; gap: 0; }
+    .line figure { margin: 0 12px 0 0; text-align: center; } .line svg { display: block; }
+    .cap { font-size: 13px; text-align: center; }
+    .foot { z-index: 5; position: absolute; left: 0; bottom: 0; height: 0; border-top: 1px solid #e33; pointer-events: none; }
+    .stack { position: relative; display: inline-block; }
+    .stack svg { position: absolute; left: 0; top: 0; opacity: .4; }
+    .stripbox { position: relative; width: 960px; height: 250px; overflow: hidden; margin-top: 8px; }
+    .rep { position: absolute; left: 0; bottom: 0; display: flex; } .rep svg { display: block; }
+    .onroad { position: absolute; bottom: 30px; } .onroad svg { display: block; }
+    .seams { position: relative; width: 960px; height: 16px; font-size: 11px; color: #e33; }
+    .seams span { position: absolute; transform: translateX(-50%); }
+  </style></head><body>
+    <h1>主人公の コマと 歩く道の 帯　一覧</h1>
+    <h2>歩く 4コマ（3倍）。いちばん 左が 今の hero.svg。赤い線が 足もと</h2>
+    <div class="panel"><div class="line">
+      ${['hero', ...walk].map((n) => `<figure><div class="cap">${n}</div>${hero(n, K)}</figure>`).join('')}
+      <div class="foot"></div></div></div>
+    <h2>重ねた ところ（4コマ＋今の絵、3倍）。足もとが 赤い線に そろえば OK</h2>
+    <div class="panel"><div class="stack line" style="width:${85 * K}px;height:${110 * K}px">
+      ${['hero', ...walk].map((n) => hero(n, K)).join('')}<div class="foot"></div></div></div>
+    <h2>攻撃・勝ち（3倍）。左は 今の hero.svg</h2>
+    <div class="panel"><div class="line">
+      ${['hero', 'hero-attack', 'hero-cheer'].map((n) => `<figure><div class="cap">${n}</div>${hero(n, K)}</figure>`).join('')}
+      <div class="foot"></div></div></div>
+    <h2>歩く道の 帯 7つ（それぞれ 3回 ならべた。2倍。主人公は 足が 道に のった 見本）</h2>
+    <div class="panel">${strips}</div>
+  </body></html>`;
+}
+
 async function main() {
-  const key = process.argv.find((a) => AREAS[a]) ?? 'area1';
+  const heroMode = process.argv.includes('hero');
+  const key = heroMode ? 'hero' : (process.argv.find((a) => AREAS[a]) ?? 'area1');
   const partsAt = process.argv.indexOf('--parts');
   const { chromium } = await import(PLAYWRIGHT);
   const browser = await chromium.launch({ channel: 'chrome' });
   try {
     const page = await browser.newPage({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 1 });
-    await page.setContent(html(AREAS[key]));
+    await page.setContent(heroMode ? heroHtml() : html(AREAS[key]));
     const outDir = join(here, 'contact');
     mkdirSync(outDir, { recursive: true });
     await page.screenshot({ path: join(outDir, `${key}.png`), fullPage: true });
