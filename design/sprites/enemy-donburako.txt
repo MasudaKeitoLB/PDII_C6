@@ -1,0 +1,25 @@
+name: どんぶらこ
+palette:
+k #1E1B18 りんかく・目
+p #F2A7B8 もも
+d #E07A96 ももの かげ・すじ
+g #6CC04A 葉
+b #3D7FCC 波
+y #FFC53D 金の ひかり
+grid:
+.......kk.......
+......kppk.kk...
+.....kppppkggk..
+...kkppdpppkgk..
+..kypppdpppppk..
+.kpppppdpppppdk.
+.kppkkpdppkkpdk.
+.kppkkpdppkkpdk.
+.kpppppdppppddk.
+.kppppppppppddk.
+..kpppppppdddk..
+...kkkkkkkkkk...
+.bb..bbbb..bbbb.
+b..bb....bb....b
+..bbbb..bbbb..bb
+................

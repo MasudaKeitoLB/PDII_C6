@@ -1,0 +1,23 @@
+name: ひらちょう
+palette:
+k #1E1B18 りんかく・目
+w #FFFFFF はね
+s #DDE4F7 はねの かげ
+b #4D4640 体
+grid:
+.....k....k.....
+.kkk..k..k..kkk.
+kwwwkk.kk.kkwwwk
+kwwwwwkbbkwwwwwk
+kwwwkwkbbkwkwwwk
+kwwwkwkbbkwkwwwk
+kswwwwkbbkwwwwsk
+.kswwwkbbkwwwsk.
+..kkkkkbbkkkkk..
+..kwwwkbbkwwwk..
+.kwwwwkbbkwwwwk.
+.kwwwskbbkswwwk.
+.kswsk.kk.kswsk.
+..kkk......kkk..
+................
+................

@@ -1,0 +1,7 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<title>敵：みずたまり</title>
+<path d="M15 50h50v5h-50zM5 55h10v5h-10zM65 55h10v5h-10zM0 60h5v5h-5zM15 60h10v5h-10zM30 60h10v5h-10zM75 60h5v5h-5zM0 65h5v5h-5zM15 65h10v5h-10zM30 65h10v5h-10zM75 65h5v5h-5zM5 70h10v5h-10zM70 70h5v5h-5zM15 75h55v5h-55z" fill="#1E1B18"/>
+<path d="M15 55h30v5h-30zM55 55h10v5h-10zM5 60h10v5h-10zM25 60h5v5h-5zM45 60h10v5h-10zM60 60h15v5h-15zM5 65h10v5h-10zM25 65h5v5h-5zM40 65h5v5h-5zM55 65h5v5h-5zM15 70h40v5h-40z" fill="#8FD0F2"/>
+<path d="M45 55h10v5h-10zM40 60h5v5h-5zM55 60h5v5h-5zM45 65h10v5h-10zM60 65h10v5h-10z" fill="#FFFFFF"/>
+<path d="M70 65h5v5h-5zM55 70h15v5h-15z" fill="#5FA8DC"/>
+</svg>

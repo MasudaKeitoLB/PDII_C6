@@ -672,6 +672,215 @@ await test('38 Firefox（1秒に 10回）：数えられ、確かめる画面の
   }
 });
 
+// ---- ゲームの核（エリア・ボス・絵の無い敵）----
+console.log('ゲームの核');
+
+/** 大きな歩数は ページの中で store の関数を呼んで入れる（山田さんは はじめ 28,550歩の所に いる） */
+const walkInStore = (steps) =>
+  page.evaluate(async (n) => {
+    const s = await import('/src/lib/store.ts');
+    s.recordSteps('s-yamada', n);
+    s.finishAdventure('s-yamada');
+  }, steps);
+const YAMADA_START = 28550;
+
+await test('39 ボスの手前まで進めて 歩くと、成果に「ボス」と「あと」が出る', async () => {
+  await reset();
+  await enterSample();
+  await walkInStore(119000 - YAMADA_START);
+  await page.getByRole('button', { name: /^2,345歩 歩いて 止まったことにする/ }).click();
+  await waitHash('adventure-result');
+  await visible(page.getByText(/ボス はなふぶき\s+あと 8,655歩/), '成果の ボスの行');
+  // この歩数では レベルは上がらない（レベル29のまま）ので、成果から そのまま ホームへ
+  await btn('つづける').click();
+  await waitHash('home');
+  await visible(page.getByLabel('ボス はなふぶき あと 8,655歩'), 'ホームの ボスの残り歩数');
+  await visible(page.locator('[data-enemy="hanafubuki"]'), 'ホームの ボスの絵');
+});
+
+await test('40 エリア1をこえると、こえたことの行が出て、ホームの敵が エリア2の敵になる', async () => {
+  await reset();
+  await enterSample();
+  await visible(page.getByLabel('いまいる所：はなあかりの小道'), 'はじめのエリアの名前');
+  await page.evaluate(async (n) => {
+    const s = await import('/src/lib/store.ts');
+    s.recordSteps('s-yamada', n);
+  }, 130000 - YAMADA_START);
+  await go('adventure-result');
+  await visible(page.getByText('はなあかりの小道を こえた。次は わかばの田んぼ道'), 'こえたことの行');
+  await btn('つづける').click();
+  await waitHash('level-up');
+  await btn('つづける').click();
+  await waitHash('home');
+  await visible(page.getByLabel('いまいる所：わかばの田んぼ道'), '次のエリアの名前');
+  const enemy = await page.locator('[data-frame] [data-enemy]').first().getAttribute('data-enemy');
+  const area = await page.evaluate(async (id) => {
+    const d = await import('/src/data/enemies.ts');
+    return d.ENEMIES.find((e) => e.id === id)?.area;
+  }, enemy);
+  assert(area === 2, `ホームの敵が ${enemy}（エリア${area}）`);
+});
+
+await test('41 絵の無い敵（エリア3以降）が出ても、代わりの絵が出て、コンソールのエラーが 0件', async () => {
+  const before = problems.length;
+  await reset();
+  await enterSample();
+  await walkInStore(300000 - YAMADA_START);
+  await go('records');
+  await go('home');
+  await visible(page.getByLabel('いまいる所：ゆうすずみ商店街'), 'エリア3の名前');
+  await visible(page.locator('[data-frame] svg[data-placeholder]'), 'ホームの 代わりの絵');
+  await page.getByRole('button', { name: /^2,345歩 歩いて 止まったことにする/ }).click();
+  await waitHash('adventure-result');
+  await visible(page.getByRole('list', { name: /^たおした敵/ }).locator('svg[data-placeholder]'), '成果の 代わりの絵');
+  const count = await page.getByRole('list', { name: /^たおした敵/ }).locator('svg[data-placeholder]').count();
+  assert(count === 3, `代わりの絵が ${count}こ`);
+  await page.waitForTimeout(300);
+  assert(problems.length === before, problems.slice(before, before + 3).join(' / '));
+});
+
+// ---- 演出と音・設定 ----
+console.log('演出と音・設定');
+
+/** 「わたし」の 入・切の 行（aria-pressed で 入・切を 読む） */
+const prefRow = (name) => page.getByRole('button', { name: new RegExp(`^${name}`) });
+const pressedOf = async (name) => (await prefRow(name).getAttribute('aria-pressed')) === 'true';
+/** 入・切を want に そろえる */
+const setPref = async (name, want) => {
+  if ((await pressedOf(name)) !== want) await prefRow(name).click();
+  await prefRow(name).and(page.locator(`[aria-pressed="${want}"]`)).waitFor({ state: 'visible' }).catch(() => {
+    throw new Error(`${name} が ${want ? '入' : '切'}に ならない`);
+  });
+};
+/** 歩いた分を 入れて、成果の画面を 開く（ボタンを 押さずに 開くので、ボタンの 音は 入らない） */
+const openResultWithSteps = async (steps) => {
+  await page.evaluate(async (n) => {
+    const s = await import('/src/lib/store.ts');
+    s.recordSteps('s-yamada', n);
+  }, steps);
+  await go('adventure-result');
+  await visible(page.getByRole('list', { name: /^たおした敵/ }), '成果の 敵の絵');
+};
+
+await test('42 わたし：音・歩いている間の音・動きをへらす の入・切を 押して かえられ、開きなおしても のこる', async () => {
+  await reset();
+  await enterSample();
+  await go('me');
+  for (const name of ['音', '歩いている間の音', '動きをへらす']) await visible(prefRow(name), `${name} の行`);
+  assert((await pressedOf('音')) === true, '音は はじめ 入');
+  assert((await pressedOf('歩いている間の音')) === false, '歩いている間の音は はじめ 切');
+  assert((await pressedOf('動きをへらす')) === false, '動きをへらすは はじめ 切');
+  await visible(prefRow('歩いている間の音').getByText('切', { exact: true }), '切の 表示');
+  await setPref('音', false);
+  await setPref('歩いている間の音', true);
+  await setPref('動きをへらす', true);
+  await visible(prefRow('音').getByText('切', { exact: true }), '音の 切の 表示');
+  await page.reload();
+  await page.waitForSelector('aside');
+  await waitHash('me');
+  await visible(prefRow('音'), '開きなおした あとの 音の行');
+  assert((await pressedOf('音')) === false, '音の 切が のこっていない');
+  assert((await pressedOf('歩いている間の音')) === true, '歩いている間の音の 入が のこっていない');
+  assert((await pressedOf('動きをへらす')) === true, '動きをへらすの 入が のこっていない');
+  // もとに もどす
+  await setPref('音', true);
+  await setPref('歩いている間の音', false);
+  await setPref('動きをへらす', false);
+});
+
+await test('43 音が「切」のときは 鳴らさず、「入」のときは 成果の画面で 鳴らそうとする（にせの AudioContext で 数える）', async () => {
+  await page.addInitScript(() => {
+    const audio = { contexts: 0, notes: 0 };
+    window.__audio = audio;
+    const param = () => ({ value: 0, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, cancelScheduledValues() {}, setTargetAtTime() {} });
+    const node = () => ({ connect() {} });
+    class FakeAudioContext {
+      constructor() {
+        audio.contexts += 1;
+        this.state = 'running';
+        this.currentTime = 0;
+        this.destination = node();
+      }
+      resume() {
+        return Promise.resolve();
+      }
+      createGain() {
+        return { ...node(), gain: param() };
+      }
+      createOscillator() {
+        audio.notes += 1;
+        return { ...node(), type: 'sine', frequency: param(), start() {}, stop() {} };
+      }
+    }
+    window.AudioContext = FakeAudioContext;
+    window.webkitAudioContext = FakeAudioContext;
+  });
+  await page.reload();
+  await page.waitForSelector('aside');
+  await reset();
+  await enterSample();
+  await go('me');
+  await setPref('音', false);
+  await page.evaluate(() => (window.__audio.notes = 0));
+  await openResultWithSteps(2345);
+  await page.waitForTimeout(800);
+  const off = await page.evaluate(() => window.__audio.notes);
+  assert(off === 0, `切なのに ${off}回 鳴らそうとした`);
+  await btn('つづける').click();
+  await waitHash('level-up');
+  await btn('つづける').click();
+  await waitHash('home');
+  assert((await page.evaluate(() => window.__audio.notes)) === 0, '切なのに レベルアップや ボタンで 鳴らそうとした');
+
+  await go('me');
+  await setPref('音', true);
+  await page.evaluate(() => (window.__audio.notes = 0));
+  await openResultWithSteps(2345);
+  await page.waitForFunction(() => window.__audio.notes > 0, null, { timeout: 3000 }).catch(() => {
+    throw new Error('入なのに 成果の画面で 鳴らそうとしない');
+  });
+  assert((await page.evaluate(() => window.__audio.contexts)) === 1, 'AudioContext は 1つだけ 作る');
+});
+
+await test('44 動きをへらすが「入」のとき、成果の画面の アニメーションが 止まっている', async () => {
+  await reset();
+  await enterSample();
+  const animOf = () =>
+    page.evaluate(() => {
+      const li = document.querySelector('[aria-label^="たおした敵"] li');
+      const st = getComputedStyle(li);
+      return { name: st.animationName, duration: parseFloat(st.animationDuration) || 0 };
+    });
+  // 切のときは 動いている（テストが 意味を もつことの 確かめ）
+  await openResultWithSteps(2345);
+  const moving = await animOf();
+  assert(moving.name !== 'none' && moving.duration > 0.1, `切なのに 動いていない（${moving.name} ${moving.duration}s）`);
+  await btn('つづける').click();
+  await waitHash('level-up');
+  await btn('つづける').click();
+  await waitHash('home');
+
+  await reset();
+  await enterSample();
+  await go('me');
+  await setPref('動きをへらす', true);
+  await openResultWithSteps(2345);
+  const still = await animOf();
+  assert(still.name === 'none' || still.duration <= 0.001, `入なのに 動いている（${still.name} ${still.duration}s）`);
+  await btn('つづける').click();
+  await waitHash('level-up');
+  await visible(page.getByLabel(/に上がりました$/), 'レベルの 数字');
+  const sparkle = await page.evaluate(() => {
+    const st = getComputedStyle(document.querySelector('[aria-label$="に上がりました"] span:last-child'));
+    return { name: st.animationName, duration: parseFloat(st.animationDuration) || 0 };
+  });
+  assert(sparkle.name === 'none' || sparkle.duration <= 0.001, `レベルアップの 数字が 動いている（${sparkle.name}）`);
+  await btn('つづける').click();
+  await waitHash('home');
+  await go('me');
+  await setPref('動きをへらす', false);
+});
+
 // ---- まとめ ----
 await test('27 画面のエラー・警告が出ていない', async () => {
   const filtered = problems.filter((p) => !/favicon\.ico|fonts\.(googleapis|gstatic)/i.test(p));

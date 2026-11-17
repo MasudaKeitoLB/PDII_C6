@@ -1,0 +1,23 @@
+name: ぽつりん
+palette:
+k #1E1B18 りんかく・目
+c #8FD0F2 しずく
+d #5FA8DC かげ
+w #FFFFFF ひかり
+grid:
+.......kk.......
+......kcck......
+......kcck......
+.....kcwcck.....
+.....kwwccck....
+....kcwccccdk...
+...kcwwcccccdk..
+..kccwccccccddk.
+..kcccccccccddk.
+.kcckkcccckkcddk
+.kcckkcccckkcddk
+.kccccccccccdddk
+.kccccccccccdddk
+..kccccccccdddk.
+...kkcccddddkk..
+.....kkkkkkk....

@@ -1,0 +1,23 @@
+name: おめんさん
+palette:
+k #1E1B18 りんかく・目
+w #FFFFFF 顔
+s #DDE4F7 顔の かげ
+r #D9482B 朱の もよう・ひも
+grid:
+..kk........kk..
+.kwrk......krwk.
+.kwrrk....krrwk.
+.kwwrwkkkkwrwwk.
+.kwwwwwrrwwwwsk.
+.kwwwwwwwwwwwsk.
+.kwkkkwwwwkkksk.
+rkwkwkwwwwkwkskr
+rkwwwwwwwwwwwskr
+r.kwrrwwwwrrsk.r
+r.kwwwwwwwwwsk.r
+r..kwwwkkwwsk..r
+r...kwwwwwsk...r
+r....kwwwsk....r
+r.....kkkk.....r
+................

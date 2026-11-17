@@ -1,0 +1,24 @@
+name: きんとと
+palette:
+k #1E1B18 りんかく・目
+o #E8732C 体
+d #C2410C かげ
+p #FFB07A 尾の ひかり
+w #FFFFFF おなか
+grid:
+...........kkkk.
+..........kppppk
+...kkkkk..kpoodk
+..kooooook.kpodk
+.koooooooookpok.
+koookkooooodkkkk
+koookkoooooopppk
+koooooooooodoodk
+kwwooooooooopppk
+.kwwwwooooodkkkk
+..kwwwwwwookpok.
+...kkkkkkk.kpodk
+..........kpoodk
+..........kppppk
+...........kkkk.
+................

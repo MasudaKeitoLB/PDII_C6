@@ -4,8 +4,9 @@
 
 import { useSyncExternalStore } from 'react';
 import { dayKey, now as currentTime } from './dates';
-import { clearPending, newGame, walk } from './game';
-import { buildSampleUsers, SAMPLE_CARE_MANAGER_ID, SAMPLE_FACILITY_ID, sampleHistory } from './sampleData';
+import { clearPending, isGameRecord, newGame, normalizeGame, startLap, walk } from './game';
+import { fnv1a } from './random';
+import { buildSampleUsers, gameSeed, SAMPLE_CARE_MANAGER_ID, SAMPLE_FACILITY_ID, sampleHistory } from './sampleData';
 import { readJson, removeKey, writeJson } from './storage';
 import type { AppUser, LoginCredentials, Profile, ShareTarget, TextSize } from './types';
 
@@ -55,9 +56,8 @@ function isAppUser(value: unknown): value is AppUser {
     typeof u.shares.careManager?.agreed === 'boolean' &&
     typeof u.days === 'object' &&
     u.days !== null &&
-    typeof u.game === 'object' &&
-    u.game !== null &&
-    typeof u.game.level === 'number'
+    // game は オブジェクトであれば通す。中身（level が数でない など）は 読みこみのあと normalizeGame で直す
+    isGameRecord(u.game)
   );
 }
 
@@ -90,7 +90,8 @@ function load(): StoreData {
   const saved = readJson<unknown>(STORE_KEY, null);
   if (typeof saved === 'object' && saved !== null && (saved as StoreData).version === 2) {
     const s = saved as StoreData;
-    const users = Array.isArray(s.users) ? s.users.filter(isAppUser) : [];
+    // ゲームの記録は 全員 いまの形に直す（古い形・こわれた値も 消さずに直す）
+    const users = (Array.isArray(s.users) ? s.users.filter(isAppUser) : []).map((u) => ({ ...u, game: normalizeGame(u.game, gameSeed(u.id)) }));
     return {
       version: 2,
       users,
@@ -149,11 +150,12 @@ export function ensureSampleData(at: Date = currentTime()): void {
 
 function newAppUser(profile: Profile, agreed: boolean, at: Date, id?: string): AppUser {
   const iso = at.toISOString();
+  const userId = id ?? `u_${at.getTime().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
   return {
     ...profile,
     name: profile.name.trim(),
     nickname: profile.nickname.trim(),
-    id: id ?? `u_${at.getTime().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
+    id: userId,
     kana: null,
     careLevel: null,
     facilityId: SAMPLE_FACILITY_ID,
@@ -163,7 +165,8 @@ function newAppUser(profile: Profile, agreed: boolean, at: Date, id?: string): A
     textSize: 'normal',
     days: {},
     lastSyncAt: iso,
-    game: newGame(),
+    // 出会う敵を決める種は 人ごとに ちがう（id から作る）
+    game: newGame(fnv1a(userId)),
     registeredAt: iso,
     sample: false,
   };
@@ -236,6 +239,11 @@ export function recordSteps(id: string, steps: number, at: Date = currentTime())
 /** 冒険の成果を見おわった */
 export function finishAdventure(id: string): void {
   updateUser(id, (u) => ({ ...u, game: clearPending(u.game) }));
+}
+
+/** 次の巡りを はじめる（はつひのでを こえた人だけ。レベル・ポイント・会った回数は そのまま） */
+export function startNextLap(id: string): void {
+  updateUser(id, (u) => ({ ...u, game: startLap(u.game) }));
 }
 
 export function setTextSize(id: string, textSize: TextSize): void {

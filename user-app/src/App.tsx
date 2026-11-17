@@ -3,7 +3,9 @@ import { DemoPanel, DEMO_PANEL_RESERVE } from './demo/DemoPanel';
 import { DeviceFrame, PcFrame } from './demo/DeviceFrame';
 import { useAppState } from './flow/AppState';
 import { routeInfo, type RouteId } from './flow/routes';
+import { usePreferences } from './flow/usePreferences';
 import { useWideLayout } from './flow/useWideLayout';
+import { armAudio } from './lib/sound';
 import { AdminListScreen } from './screens/admin/AdminListScreen';
 import { AdminLoginScreen } from './screens/admin/AdminLoginScreen';
 import { AdminPcListScreen } from './screens/admin/AdminPcListScreen';
@@ -175,6 +177,16 @@ export function App() {
   useEffect(() => {
     document.title = `${info.name}｜歩歩〜HoHo〜`;
   }, [info.name]);
+
+  // 音は 画面を はじめて さわった あとに 準備する（iPhone の 決まり）
+  useEffect(() => armAudio(), []);
+
+  // 「動きを へらす」が 入のときは 動く 演出を 止める（global.css）
+  const { reduceMotion } = usePreferences();
+  useEffect(() => {
+    if (reduceMotion) document.documentElement.dataset.motion = 'reduce';
+    else delete document.documentElement.dataset.motion;
+  }, [reduceMotion]);
 
   useEffect(() => {
     // 文字の大きさ（M-02）は 利用者アプリの画面だけに使う

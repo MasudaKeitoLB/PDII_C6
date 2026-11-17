@@ -1,9 +1,11 @@
 // デモ用のサンプルの利用者（Figma の管理者画面 AP-02 の12人）。
 // 今日の歩数・目標・前週との差・最終受信は Figma と同じにし、それより前の日は 決まった乱数で作る。
 // 山田 花子さんの 30日分は、Figma の R-01・R-02 のグラフから読みとった数にしている。
+// このファイルも 単体テスト（node --test）で動かすので、値の import には .ts を付ける。
 
-import { addDays, dayKey, lastDays, startOfDay } from './dates';
-import { gameAt } from './game';
+import { addDays, dayKey, lastDays, startOfDay } from './dates.ts';
+import { gameAt } from './game.ts';
+import { fnv1a } from './random.ts';
 import type { AppUser, Gender } from './types';
 
 export const SAMPLE_FACILITY_ID = 'temari-01';
@@ -56,6 +58,18 @@ const YAMADA_30_DAYS = [
   3350, 2716, 4614, 3247, 1312, 4108, 2838, 5762, 6231, 5683, 4315, 4858, 5712, 1368, 2930, 6061, 5963, 5822, 4516,
   3076, 4516, 3382, 2790, 4820, 5310, 2150, 6020, 5480, 3900, 3210,
 ];
+
+/**
+ * 山田 花子さんの 冒険の種。Figma の H-01（次の敵が あまぐも）と H-03（2,345歩で 3体・+30ポイント）に合うように、
+ * fnv1a('s-yamada') に 1ずつ足していき、はじめに「次の3体が あまぐも → いしころん → はっぱっぱ（3体とも ふつう）」に
+ * なった数（＋2358）に決めた。合っているかは game.test.ts で確かめる。
+ */
+export const YAMADA_SEED = 3596581508;
+
+/** 冒険の種は 人ごとに ちがう（id から作る）。保存してある記録を 読みこむときも 同じ決め方を使う */
+export function gameSeed(id: string): number {
+  return id === 's-yamada' ? YAMADA_SEED : fnv1a(id);
+}
 
 /** 決まった乱数（毎回同じ数が出る） */
 function seeded(seed: number) {
@@ -125,7 +139,7 @@ export function buildSampleUsers(now: Date): AppUser[] {
       textSize: 'normal',
       days,
       lastSyncAt: received.toISOString(),
-      game: gameAt(spec.level, spec.id === 's-yamada' ? 1450 : 1200 + index * 90, spec.points),
+      game: gameAt(spec.level, spec.id === 's-yamada' ? 1450 : 1200 + index * 90, spec.points, gameSeed(spec.id)),
       registeredAt: new Date(2026, 3, 1).toISOString(),
       sample: true,
     } satisfies AppUser;

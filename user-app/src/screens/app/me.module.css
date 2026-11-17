@@ -52,9 +52,14 @@
   line-height: var(--fs-note);
   color: var(--color-sumi-soft);
 }
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
 .levelBadge {
   display: inline-block;
-  margin-top: 14px;
   padding: 0 21px;
   border: 2px solid var(--color-gold-line);
   border-radius: 15px;
@@ -63,6 +68,34 @@
   line-height: 26px;
   font-weight: 700;
   color: var(--color-gold-text);
+}
+
+/* 巡りの数（2巡り目から） */
+.lapBadge {
+  padding: 0 12px;
+  border: 2px solid var(--color-line);
+  border-radius: 15px;
+  background: var(--color-white);
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 700;
+  color: var(--color-sumi-soft);
+  white-space: nowrap;
+}
+
+/* 次の巡り：はつひのでを こえた人にだけ出る */
+.lapCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 18px;
+  border: var(--border-line) solid var(--color-gold-line);
+  border-radius: 19px;
+  background: var(--color-gold-pale);
+  font-size: var(--fs-note);
+  line-height: var(--lh-note);
+  color: var(--color-sumi);
 }
 
 .rows {

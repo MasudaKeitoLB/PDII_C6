@@ -1,0 +1,25 @@
+name: かやりぶた
+palette:
+k #1E1B18 りんかく・目
+w #FFFFFF 体
+s #C9D3E3 体の かげ
+m #9AA3B5 けむり
+d #7A6A5E 口の 中
+o #E8732C 線香の 火
+grid:
+..mmm...........
+.m...m..........
+.m.mm....kkkk...
+.m.......k..k...
+..m...kkkkkkkk..
+..kkkkwwwwwwwwk.
+.kddddkwwwwwwwsk
+.kdoddkwkkwwwwsk
+.kddddkwkkwwwwsk
+.kddddkwwwwwwwsk
+.kddddkwwwwwwssk
+..kkkkwwwwwwsssk
+...kwwwwwwssssk.
+...kkkkkkkkkkkk.
+....kk.kk.kk.kk.
+....kk.kk.kk.kk.

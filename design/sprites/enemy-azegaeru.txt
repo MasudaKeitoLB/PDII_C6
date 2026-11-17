@@ -1,0 +1,24 @@
+name: あぜがえる
+palette:
+k #1E1B18 りんかく・目
+g #3E9A63 体
+l #A8D672 ひかり
+y #FBF0B8 おなか
+d #2C7A4B かげ
+grid:
+................
+..kkkk....kkkk..
+.kggggk..kggggk.
+.kgkkgkkkkgkkgk.
+.kgkkggggggkkgk.
+.kggggggggggggk.
+kgglggggggggggdk
+kglggggggggggddk
+kggggyyyyyyggddk
+kgggyyyyyyyygddk
+kggyyyyyyyyyygdk
+kggyyyggggyyygdk
+kkgyyyggggyyydkk
+kggkyyggggyykddk
+kgggkkgkkgkkdddk
+kkkkkkkkkkkkkkkk

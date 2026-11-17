@@ -1,0 +1,23 @@
+name: からころげた
+palette:
+k #1E1B18 りんかく・目
+t #D9A85B 木
+d #9A6B2F 木の かげ
+r #D9482B はなお
+grid:
+....rrrr........
+..rrr..rrr......
+.rr......rr.....
+.r........rr....
+kkkkkkkk...r....
+kttttttkkkkkkkkk
+kttttttttttttttk
+kttkkttttkkttttk
+kttkkttttkkttddk
+kkkkkkkktddddddk
+..kttdkkkkkkkkkk
+..kttdk..kttdk..
+..kttdk..kttdk..
+..kttdk..kttdk..
+..kkkkk..kttdk..
+.........kkkkk..

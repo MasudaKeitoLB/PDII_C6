@@ -1,0 +1,24 @@
+name: あさがおん
+palette:
+k #1E1B18 りんかく・目
+b #5B6FD6 花
+d #3B4BA8 花の かげ
+w #FFFFFF 花の 口
+g #6CC04A がく・つる
+grid:
+....kkkkkkkkkkk.
+...kwwwwwwwwwwwk
+...kbbwwwwwwwbdk
+...kbbbbbbbbbbdk
+....kbbbbbbbbdk.
+....kbkkbbkkbdk.
+.gg.kbkkbbkkbdk.
+g..g.kbbbbbbdk..
+g.g..kbbbbbddk..
+g.....kbbbbdk...
+.gg...kbbbddk...
+...g...kbbdk....
+....g.kkggkk....
+.....gkggggk....
+.......kggk.....
+........kk......

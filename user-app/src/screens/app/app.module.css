@@ -30,6 +30,44 @@
   color: var(--color-white);
 }
 
+/* いまいるエリアの名前：左上に 小さく（ポイントのまど x228〜 に かからない はば） */
+.placeName,
+.bossLeft {
+  width: fit-content;
+  max-width: 205px;
+  padding: 5px 12px 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 14px;
+  background: rgb(27 34 64 / 0.78);
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-white);
+}
+/* 文字を大きくしている人には 大きく出す。ボスの行は 数字が長いので、はば（205px）に おさまる大きさにする */
+:root[data-text-size="large"] .placeName,
+:root[data-text-size="large"] .bossLeft {
+  font-size: 18px;
+}
+:root[data-text-size="xlarge"] .placeName {
+  font-size: 20px;
+}
+:root[data-text-size="xlarge"] .bossLeft {
+  font-size: 18px;
+}
+
+/* ボスの のこりの歩数：エリアの名前の すぐ下に 小さく1行（ボスと戦っている間だけ） */
+.bossLeft {
+  margin-top: 6px;
+  font-weight: 400;
+  color: var(--color-navy-sub);
+}
+.bossLeft strong {
+  color: var(--color-white);
+}
+
 /* 主人公の状態のまど：371×124（とても大きい 371×134） */
 .statusWindow {
   --name-fs: 20px;
@@ -234,4 +272,20 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+}
+
+/* ---------- 演出（動きを へらす ときは global.css で 止める） ---------- */
+
+/* ホームの 次の敵：2px だけ ゆっくり 上下する（2.8秒で 1回） */
+.enemyIdle {
+  animation: enemy-idle 2.8s ease-in-out infinite;
+}
+@keyframes enemy-idle {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: translateY(-2px);
+  }
 }
