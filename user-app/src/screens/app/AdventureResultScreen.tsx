@@ -9,6 +9,8 @@ import { EnemySprite } from '../../components/EnemySprite';
 import { FitScene, Place } from '../../components/FitScene';
 import { GameWindow } from '../../components/GameWindow';
 import { Screen } from '../../components/Screen';
+import { StageScene, stageBackground } from '../../components/StageScene';
+import { stagePlaceAt } from '../../data/stages';
 import { useAppState, useUser } from '../../flow/AppState';
 import { useBattleClock } from '../../flow/useBattleClock';
 import { useReducedMotion, useSkipOnTouch } from '../../flow/usePreferences';
@@ -24,6 +26,13 @@ import s from './result.module.css';
 const MAX_SPRITES = 6;
 /** できごとの行が 1行ずつ 出る 間（秒） */
 const NOTE_GAP_SEC = 0.35;
+/** 戦闘の 場面（393×235）と 地面の 高さ。エリアの 背景（395×420）は 26px 上に ずらして 地面を そろえる */
+const SCENE_W = 393;
+const SCENE_H = 235;
+const GROUND_Y = 224;
+const BG_OFFSET_Y = -26;
+/** 水の輪・波を 出す 高さ（足もとの すぐ下） */
+const FLOOR_Y = 227;
 
 const delay = (sec: number) => ({ animationDelay: `${sec.toFixed(2)}s` });
 
@@ -57,6 +66,9 @@ export function AdventureResultScreen() {
   const t = useBattleClock(plan?.total ?? 0, instant);
   const points = plan ? pointsAt(plan, t) : 0;
   const notesDelay = plan ? plan.total : 0;
+  // 場面は 歩きはじめた 所の エリア（エリアを こえたときは、こえる 前の 道で 戦って、次の 道の 色が 広がる）。
+  // 次の巡りを はじめても 位置が 0 に もどるだけなので、成果を 作りはじめた 位置（fromPos）を 使う
+  const { stage, phase } = stagePlaceAt(pending?.fromPos ?? Math.max(0, user.game.pos - (pending?.steps ?? 0)));
 
   // 音：戦闘に 合わせて 鳴らす（レア → 鈴、ボス → 太鼓、エリアを こえる → 笛）。音が 切なら 鳴らさない。
   // 動きを へらす ときは 開いたときに 順に 鳴らす。画面を さわって とばしたら のこりの 音は 鳴らさない。
@@ -93,10 +105,19 @@ export function AdventureResultScreen() {
     <Screen
       title="冒険の成果"
       scene={
-        <FitScene width={393} height={235}>
-          <Place x={0} y={0}>
-            <img src={resultBg} alt="" />
-          </Place>
+        <FitScene width={SCENE_W} height={SCENE_H}>
+          <StageScene
+            layout="battle"
+            stage={stage}
+            phase={phase}
+            seed={user.game.seed}
+            width={SCENE_W}
+            height={SCENE_H}
+            groundY={GROUND_Y}
+            floorY={FLOOR_Y}
+            bg={stageBackground(stage, resultBg, BG_OFFSET_Y)}
+            paused={walking}
+          />
           {plan && <BattleScene plan={plan} t={t} instant={instant} />}
           {!plan && (
             <Place x={156.5} y={120}>

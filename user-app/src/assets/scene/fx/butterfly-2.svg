@@ -1,0 +1,6 @@
+<svg width="21" height="15" viewBox="0 0 21 15" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<title>ギミック：butterfly 羽を とじる</title>
+<path d="M9 0h3v3h-3zM9 3h3v3h-3zM9 6h3v3h-3zM9 9h3v3h-3z" fill="#5C3A20"/>
+<path d="M6 3h3v3h-3zM12 3h3v3h-3zM3 6h3v3h-3zM15 6h3v3h-3zM6 9h3v3h-3zM12 9h3v3h-3zM6 12h3v3h-3zM12 12h3v3h-3z" fill="#FFC53D"/>
+<path d="M6 6h3v3h-3zM12 6h3v3h-3z" fill="#E8732C"/>
+</svg>

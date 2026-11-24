@@ -1,0 +1,730 @@
+/* ステージの 場面（StageScene・StageGimmicks）。設計は docs/設計-ステージ.md。
+   - 動かすのは transform と opacity だけ（filter・box-shadow は 動かさない）。どれも ゆっくり・小さく。点滅は しない
+   - 位置の きまり：--sky（空の 上）・--ground（地面）・--floor（地面の 上の あいた 帯）
+   - 動きを へらす：data-motion="still" で すべての 動きを 止める（落ちる 粒は 出さない）
+   - 画面が 隠れている・ホームが 歩きスマホ防止の 下：data-paused で 止める
+   - keyframes の はじめと おわりは ふつうの 形（端末の 動きを へらす で 0.01秒に なっても 形が くずれない） */
+
+.stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.decor {
+  position: absolute;
+  inset: 0;
+}
+.bg {
+  position: absolute;
+  left: 0;
+}
+/* 時間帯・天気・季節の 色：うすく 重ねる（色と こさは 1分ごとに 少しずつ かわる）。
+   画面が 隠れた あとや 歩きおわった あとに 時刻を 読みなおしても、2秒かけて うつる（一度に とばない） */
+.tint {
+  position: absolute;
+  inset: 0;
+  transition:
+    opacity 2s ease,
+    background-color 2s ease;
+}
+
+.stage[data-motion="still"] *,
+.stage[data-motion="still"] *::before,
+.stage[data-motion="still"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+.stage[data-paused] *,
+.stage[data-paused] *::before,
+.stage[data-paused] *::after {
+  animation-play-state: paused !important;
+}
+
+/* ---------- 絵 ---------- */
+
+.pixel {
+  display: block;
+  overflow: visible;
+}
+.fx {
+  display: block;
+  max-width: 80px;
+  max-height: 64px;
+  image-rendering: pixelated;
+}
+/* ギミック 1つぶん。出る ときは 2.5秒かけて ふわっと 出す（時間帯や 天気が かわった ときに 急に 出ない） */
+.gimmick {
+  position: absolute;
+  inset: 0;
+  animation: stage-in 2.5s ease-out both;
+}
+@keyframes stage-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* 時間帯や 天気が かわって 出さなくなった ギミック：2.5秒かけて ふわっと 消してから 外す */
+.leaving {
+  animation: stage-out 2.5s ease-in both;
+}
+@keyframes stage-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* はばたく 2コマ（羽の 開き・とじ）。1コマずつ 見せる */
+.frames {
+  position: relative;
+  display: block;
+}
+.frameB {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+}
+.frameA {
+  animation: stage-frame-a var(--flap, 0.6s) step-end infinite;
+}
+.frameB {
+  animation: stage-frame-b var(--flap, 0.6s) step-end infinite;
+}
+@keyframes stage-frame-a {
+  0% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes stage-frame-b {
+  0% {
+    opacity: 0;
+  }
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ---------- 落ちる 粒（花びら・葉・雪）：ゆらゆら 横に ゆれながら 地面まで ---------- */
+
+.fall,
+.rain {
+  position: absolute;
+  top: calc(var(--sky) - 14px);
+  opacity: 0;
+}
+.fall {
+  animation: stage-fall var(--dur) linear var(--delay) infinite;
+}
+@keyframes stage-fall {
+  0% {
+    opacity: 0;
+    transform: none;
+  }
+  8% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(var(--dx), calc((var(--ground) - var(--sky)) * 0.5)) rotate(calc(var(--rot) * 0.5));
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, calc(var(--ground) - var(--sky) + 8px)) rotate(var(--rot));
+  }
+}
+
+/* しとしと雨：少し ななめに すっと 落ちる（うすく） */
+.rain {
+  animation: stage-rain var(--dur) linear var(--delay) infinite;
+}
+@keyframes stage-rain {
+  0% {
+    opacity: 0;
+    transform: none;
+  }
+  12%,
+  88% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), calc(var(--ground) - var(--sky)));
+  }
+}
+
+/* 水の輪：小さく ひろがって 消える */
+.ripple,
+.tapRipple {
+  position: absolute;
+  opacity: 0;
+  transform-origin: 50% 50%;
+}
+.ripple {
+  margin-left: -9px;
+  animation: stage-ripple 2.7s ease-out var(--delay) infinite;
+}
+.tapRipple {
+  translate: -50% -50%;
+  animation: stage-ripple 1.4s ease-out var(--delay) both;
+}
+@keyframes stage-ripple {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* ---------- 空を 飛ぶ・流れる もの ---------- */
+
+/* ちょうちょ・とんぼ：小さく ∞ を かくように */
+.hover {
+  position: absolute;
+  animation: stage-hover var(--dur) ease-in-out var(--delay) infinite;
+}
+@keyframes stage-hover {
+  0%,
+  100% {
+    transform: none;
+  }
+  25% {
+    transform: translate(var(--hx), calc(var(--hy) * -1));
+  }
+  50% {
+    transform: translate(calc(var(--hx) * 2), 0);
+  }
+  75% {
+    transform: translate(var(--hx), var(--hy));
+  }
+}
+
+/* 雲・かもめ：場面の はばを ゆっくり 横切る（止まった 絵では --sx の 所） */
+.drift {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  transform: translateX(var(--sx, 30%));
+  animation: stage-cross var(--dur) linear var(--delay) infinite;
+}
+/* 小舟：右から 左へ */
+.back {
+  animation-name: stage-cross-back;
+}
+@keyframes stage-cross {
+  from {
+    transform: translateX(-90px);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes stage-cross-back {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-90px);
+  }
+}
+
+/* 星：4秒より ゆっくり 明るさを かえる（点滅に しない）。絵は 小さめに */
+.star {
+  max-width: 14px;
+  max-height: 14px;
+}
+.twinkle {
+  position: absolute;
+  opacity: 0.85;
+  animation: stage-twinkle var(--dur) ease-in-out var(--delay) infinite alternate;
+}
+@keyframes stage-twinkle {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ほたる：ふわふわ ただよい、ゆっくり ともって 消える */
+.float {
+  position: absolute;
+  animation: stage-float var(--dur) ease-in-out var(--delay) infinite;
+}
+@keyframes stage-float {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: translate(var(--dx), -8px);
+  }
+}
+.glowBox {
+  position: relative;
+  display: block;
+  opacity: 0.8;
+  animation: stage-glow var(--glow, 4s) ease-in-out infinite alternate;
+}
+.fireflyGlow {
+  position: absolute;
+  left: -7px;
+  top: -7px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(230 255 150 / 0.6), rgb(230 255 150 / 0) 70%);
+}
+@keyframes stage-glow {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 花火：3コマ（小さく → ひらく → いっぱい）を やわらかく つないで 2秒ほどで ひらき、1.6秒かけて 消える。
+   27秒ごと（3つ ずらして 9秒に 1つ）。コマは 0.5秒より ゆっくり 入れかえる（点滅に しない） */
+.firework {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.fw1,
+.fw2,
+.fw3 {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: 96px;
+  max-height: 96px;
+  opacity: 0;
+  translate: -50% -50%;
+}
+.fw1 {
+  animation: stage-fw1 27s ease-out var(--delay) infinite;
+}
+.fw2 {
+  animation: stage-fw2 27s ease-out var(--delay) infinite;
+}
+.fw3 {
+  animation: stage-fw3 27s ease-out var(--delay) infinite;
+}
+@keyframes stage-fw1 {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  2.6% {
+    opacity: 1;
+    transform: none;
+  }
+  4.4%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+@keyframes stage-fw2 {
+  0%,
+  2.6% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  4.4%,
+  6.2% {
+    opacity: 1;
+    transform: none;
+  }
+  8%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+@keyframes stage-fw3 {
+  0%,
+  6.2% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  8% {
+    opacity: 1;
+    transform: none;
+  }
+  11.1% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  17%,
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+
+/* 鐘の音の 輪：ゆっくり ひろがって 消える */
+.bellRing,
+.tapRing {
+  position: absolute;
+  opacity: 0;
+  translate: -50% -50%;
+}
+.bellRing {
+  animation: stage-ring 6s ease-out var(--delay) infinite;
+}
+.tapRing {
+  animation: stage-ring 1.6s ease-out var(--delay) both;
+}
+@keyframes stage-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  15% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* 初日の出：ゆっくり のぼって そのまま */
+.sunrise {
+  position: absolute;
+  left: 50%;
+  translate: -50% -50%;
+  animation: stage-rise 6s ease-out both;
+}
+.sunriseArt {
+  max-width: 120px;
+  max-height: 80px;
+}
+@keyframes stage-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 空の 色が めぐる（めぐりの丘）：春・夏・秋・冬の 色が 48秒で 順に うすく 重なる */
+.skyLayer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, var(--c), transparent 70%);
+  opacity: 0;
+  animation: stage-sky 48s linear var(--delay) infinite;
+}
+@keyframes stage-sky {
+  0%,
+  37.5%,
+  100% {
+    opacity: 0;
+  }
+  12.5%,
+  25% {
+    opacity: 0.22;
+  }
+}
+
+/* ---------- 地面の もの ---------- */
+
+/* 波：寄せて 返す */
+.wave {
+  position: absolute;
+  opacity: 0.85;
+  animation: stage-wave 6s ease-in-out var(--delay) infinite;
+}
+@keyframes stage-wave {
+  0%,
+  100% {
+    opacity: 0.65;
+    transform: none;
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-8px);
+  }
+}
+
+/* かえる：ときどき ぴょん */
+.hop {
+  position: absolute;
+  animation: stage-hop 6s ease-out infinite;
+}
+@keyframes stage-hop {
+  0%,
+  78%,
+  90%,
+  97%,
+  100% {
+    transform: none;
+  }
+  84% {
+    transform: translateY(-8px);
+  }
+  94% {
+    transform: translateY(-3px);
+  }
+}
+
+/* ちょうちん：ひもに つるして ゆれる。うしろの 光が ゆっくり ともる */
+.lanternString {
+  position: absolute;
+  left: 2%;
+  width: 40%;
+  height: 1px;
+  background: rgb(30 27 24 / 0.6);
+}
+.sway {
+  position: absolute;
+  top: 0;
+  transform-origin: 50% 0;
+  animation: stage-sway var(--dur, 4.5s) ease-in-out var(--delay, 0s) infinite;
+}
+@keyframes stage-sway {
+  0%,
+  100% {
+    transform: none;
+  }
+  25% {
+    transform: rotate(-4deg);
+  }
+  75% {
+    transform: rotate(4deg);
+  }
+}
+.lanternLight {
+  position: absolute;
+  left: -12px;
+  top: -6px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 197 61 / 0.55), rgb(255 197 61 / 0) 70%);
+  opacity: 0.6;
+  animation: stage-glow 5s ease-in-out var(--delay, 0s) infinite alternate;
+}
+/* 歩行中：上の ひもに ならんで、遠景と 同じ 速さで 流れる（100px を 7.5秒） */
+.lanternRow {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  display: flex;
+  width: calc(100% + 100px);
+  border-top: 1px solid rgb(30 27 24 / 0.5);
+  animation: stage-row 7.5s linear infinite;
+}
+.lanternCell {
+  display: flex;
+  flex: none;
+  justify-content: center;
+  width: 100px;
+}
+@keyframes stage-row {
+  from {
+    transform: none;
+  }
+  to {
+    transform: translateX(-100px);
+  }
+}
+
+/* ---------- ホームの 目じるし（さわれる 物） ---------- */
+
+.landmark {
+  position: absolute;
+  pointer-events: auto;
+  border-radius: 10px;
+}
+.landmark:disabled {
+  cursor: default;
+}
+.landmarkArt {
+  position: absolute;
+  inset: 0;
+  /* 押せるのは ボタンの 箱だけ（箱の 外に 出る 光や ちった 花びらは 押せない） */
+  pointer-events: none;
+}
+.lmBottom {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  translate: -50% 0;
+}
+/* さわった ときに ちる 粒（1回だけ） */
+.burst {
+  position: absolute;
+  translate: -50% -50%;
+  opacity: 0;
+  animation: stage-burst 1.6s ease-out var(--delay, 0s) both;
+}
+@keyframes stage-burst {
+  0% {
+    opacity: 0;
+    transform: none;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot, 0deg));
+  }
+}
+
+/* 風鈴：竿の 先に つるして ゆれる。さわると 少し 大きく ゆれる */
+.chimeString {
+  position: absolute;
+  width: 1px;
+  background: #1e1b18;
+}
+.chime {
+  position: absolute;
+  translate: -50% 0;
+  transform-origin: 50% 0;
+}
+.chimeSway {
+  animation: stage-sway 3.6s ease-in-out infinite;
+}
+.chimeSwing {
+  animation: stage-swing 1.8s ease-out both;
+}
+@keyframes stage-swing {
+  0%,
+  100% {
+    transform: none;
+  }
+  15% {
+    transform: rotate(10deg);
+  }
+  35% {
+    transform: rotate(-8deg);
+  }
+  55% {
+    transform: rotate(5deg);
+  }
+  75% {
+    transform: rotate(-2deg);
+  }
+}
+
+/* 灯台：さわると 上の あかりが やわらかく ともる */
+.lamp {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 233 160 / 0.9), rgb(255 209 97 / 0.35) 45%, rgb(255 209 97 / 0) 70%);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+.lamp[data-on] {
+  opacity: 1;
+}
+
+/* 縁側の家：窓の あかり（夕〜夜・さわったとき）と えんとつの 煙 */
+.windowGlow {
+  position: absolute;
+  width: 34px;
+  height: 30px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 209 97 / 0.75), rgb(255 209 97 / 0));
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+.windowGlow[data-on] {
+  opacity: 1;
+}
+.smoke {
+  position: absolute;
+  opacity: 0;
+  animation: stage-smoke 7s ease-out var(--delay) infinite;
+}
+@keyframes stage-smoke {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  20% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(8px, -34px) scale(1.3);
+  }
+}
+
+/* 四季の 花だん：春・夏・秋・冬の 花が 16秒で 順に 咲く。さわると ぽんと 咲く */
+.flowerSlot {
+  position: absolute;
+  translate: 0 -100%;
+  transform-origin: 50% 100%;
+}
+.flower {
+  display: block;
+  transform-origin: 50% 100%;
+}
+.blooming {
+  animation: stage-bloom 16s ease-in-out var(--delay) infinite;
+}
+@keyframes stage-bloom {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.6);
+  }
+  10% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  25% {
+    opacity: 1;
+    transform: none;
+  }
+  40% {
+    opacity: 0.7;
+    transform: scale(0.7);
+  }
+}
+.pop {
+  animation: stage-pop 0.9s ease-out both;
+}
+@keyframes stage-pop {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: scale(1.2);
+  }
+}

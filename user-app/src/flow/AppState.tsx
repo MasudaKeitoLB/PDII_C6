@@ -185,6 +185,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const navigate = useCallback((next: RouteId) => {
     if (window.location.hash === `#${next}`) return;
     window.location.hash = next;
+    // hashchange（あとで 届く）を 待たずに 画面を かえる。ボタンを 押した その場で 新しい 画面に なる
+    setRoute(next);
   }, []);
 
   const updateRegistration = useCallback((patch: Partial<RegistrationDraft>) => {

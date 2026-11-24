@@ -64,6 +64,12 @@ export interface PendingAdventure {
    * 戦っていなければ null。古い記録には 無いので 任意の項目にし、normalizeGame で うめる
    */
   bossBefore?: { id: EnemyId; left: number; total: number } | null;
+  /**
+   * この成果を 作りはじめた ときの 位置（巡りの中の歩数）。戦闘の 場面を その道に するため
+   * （次の巡りを はじめると 位置は 0 に もどるが、成果は 年こしの峠の ものの ままに する）。
+   * 古い記録には 無いので 任意の項目にし、normalizeGame で「いまの位置 − 成果の歩数」で うめる
+   */
+  fromPos?: number;
   /** 今回 こえたエリアの番号 */
   clearedAreas: number[];
   /** 今回 会えたレア */

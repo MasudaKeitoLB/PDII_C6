@@ -43,3 +43,14 @@ node design/contact.mjs                 # 一覧の 画像を 作る
 - 一覧の 画像は、もとの リポジトリの `playwright-core` と PC の Chrome を 使って 撮る。場所が ちがう ときは 環境変数 `HOHO_PLAYWRIGHT` に `file:///…/playwright-core/index.mjs` を 入れる。
 - いしころんは 小さい絵（`enemy-ishikoron-small.svg`、1マス 3px）しか ないので、一覧では 5/3倍に して 同じ ドットの 大きさで ならべている。
 - 絵を 直したら、一覧の 画像を 作りなおして 目で 確かめる（80px で 形が 分かるか、にた絵が ないか）。
+
+## エリアの背景・遠景・ギミック
+
+| 場所 | 中身 |
+| --- | --- |
+| `build-stages.mjs` | 背景 395×420（`stage/area1-bg.svg`〜`area7-bg.svg`・`end-bg.svg`）と 流れる遠景 400×140（`*-far.svg`）を 作る |
+| `build-fx.mjs` | ギミックの 小さな 絵（`scene/fx/*.svg`、1マス 3px か 5px）を 作る |
+| `pix.mjs` | マス目の 絵 → SVG の 道具 |
+| `contact-stages.mjs` | 一覧 `contact/stages.png`（主人公・あまぐも・文字の枠を 重ねた 見本、遠景は 2回ならべ、ギミックは 4倍） |
+
+`node design/build-stages.mjs` / `node design/build-fx.mjs` / `node design/contact-stages.mjs`

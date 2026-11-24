@@ -23,7 +23,7 @@ export interface Note {
   gain: number;
 }
 
-export type SoundName = 'defeat' | 'levelUp' | 'bossMeet' | 'bossDefeat' | 'areaClear' | 'rare' | 'tap' | 'walkBell';
+export type SoundName = 'defeat' | 'levelUp' | 'bossMeet' | 'bossDefeat' | 'areaClear' | 'rare' | 'tap' | 'walkBell' | 'chime';
 
 // ---------- 決まり（テストで 確かめる） ----------
 
@@ -101,6 +101,8 @@ export const SOUNDS: Record<SoundName, readonly Note[]> = {
   tap: [n(0, G4, 0.12, 'koto', 0.05)],
   // 歩いている 間：敵を たおした 時の 小さな 鈴 1回
   walkBell: [n(0, A5, 0.5, 'suzu', 0.09)],
+  // ホームの 場面：風鈴などを さわった ときの 小さな 鈴（ちりん）
+  chime: [n(0, G5, 0.45, 'suzu', 0.07), n(0.16, A5, 0.6, 'suzu', 0.06)],
 };
 
 /** その場面の 長さ（秒） */

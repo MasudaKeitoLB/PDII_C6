@@ -31,8 +31,8 @@ const NAMES = Object.keys(SOUNDS) as SoundName[];
 /** 音の 鳴りはじめと おわりの 時刻（ここで 同時に 鳴る 数・音量が かわる） */
 const edges = (name: SoundName) => SOUNDS[name].flatMap((n) => [n.at, n.at + n.dur - 1e-9]);
 
-test('場面は 8つ そろっている', () => {
-  assert.deepEqual(NAMES.sort(), ['areaClear', 'bossDefeat', 'bossMeet', 'defeat', 'levelUp', 'rare', 'tap', 'walkBell']);
+test('場面は 9つ そろっている', () => {
+  assert.deepEqual(NAMES.sort(), ['areaClear', 'bossDefeat', 'bossMeet', 'chime', 'defeat', 'levelUp', 'rare', 'tap', 'walkBell']);
   for (const name of NAMES) assert.ok(SOUNDS[name].length > 0, name);
 });
 
@@ -103,6 +103,14 @@ test('ボタンと 歩いている 間の 鈴は ほかより 小さい・短い
   assert.equal(SOUNDS.walkBell.length, 1);
   assert.equal(SOUNDS.walkBell[0].timbre, 'suzu');
   assert.ok(soundLength('tap') <= 0.2);
+});
+
+test('場面の 風鈴（chime）：小さな 鈴だけで、短く、ほかの 場面より 小さい', () => {
+  const loudest = (name: SoundName) => Math.max(...SOUNDS[name].map((n) => n.gain));
+  assert.ok(SOUNDS.chime.every((n) => n.timbre === 'suzu'));
+  assert.ok(SOUNDS.chime.length <= 2);
+  assert.ok(soundLength('chime') <= 1);
+  for (const name of ['defeat', 'levelUp', 'rare'] as const) assert.ok(loudest('chime') < loudest(name), `chime と ${name}`);
 });
 
 test('成果の 音：中身に 合わせて 2つまで 選ぶ', () => {

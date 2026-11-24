@@ -262,6 +262,8 @@ export function walk(game: GameState, steps: number): GameState {
         boss: null,
         // 戦闘の HPバーを「前の残り」から 見せるため、作りはじめた ときの ボスの残りを 覚えておく
         bossBefore: bossAt(game.pos),
+        // 戦闘の 場面（その道の 背景）を 決めるため、作りはじめた ときの 位置も 覚えておく
+        fromPos: game.pos,
         clearedAreas: [],
         rares: [],
       };
@@ -428,6 +430,8 @@ function normalizePending(raw: unknown, level: number, fromLevel: number | null,
     toLevel: level,
     boss: bossAt(pos),
     bossBefore: normalizeBossBefore(p.bossBefore, pos, steps),
+    // 作りはじめた 位置：無い・こわれている ときは「いまの位置 − 成果の歩数」で うめる（古い記録のため）
+    fromPos: typeof p.fromPos === 'number' && Number.isFinite(p.fromPos) && p.fromPos >= 0 ? Math.floor(p.fromPos) : Math.max(0, pos - steps),
     clearedAreas: [...new Set(cleared)],
     rares,
   };

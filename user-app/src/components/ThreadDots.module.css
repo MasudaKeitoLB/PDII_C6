@@ -1,0 +1,29 @@
+/* 7色の 糸：7つの 小さな 丸（はば 7px・すきま 4px）。紺の 札の 上でも 見えるよう、どの 丸にも 明るい ふちを つける */
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 9px;
+}
+.dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+/* 色の もどった 道：その 道の 色 */
+.dot[data-thread-state="restored"] {
+  background: var(--c);
+  border: 1px solid rgb(255 255 255 / 0.7);
+}
+/* いまの 道：その 道の 色に 白い ふち（少し 大きく） */
+.dot[data-thread-state="current"] {
+  width: 9px;
+  height: 9px;
+  background: var(--c);
+  border: 2px solid var(--color-white);
+}
+/* まだの 道：うすい ふちだけ */
+.dot[data-thread-state="faded"] {
+  border: 1.5px solid rgb(221 228 247 / 0.45);
+}

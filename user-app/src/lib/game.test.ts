@@ -155,7 +155,7 @@ test('出会い：750歩ごとに 1体。まとめて歩いても 分けて歩�
 test('出会い：歩数が 1以上なら 敵が 0体でも 成果を作る。0以下・数でない歩数は 何もしない', () => {
   const g = newGame(1);
   const after = walk(g, 10);
-  assert.deepEqual(after.pending, { steps: 10, enemies: [], exp: 10, points: 0, fromLevel: 1, toLevel: 1, boss: null, bossBefore: null, clearedAreas: [], rares: [] });
+  assert.deepEqual(after.pending, { steps: 10, enemies: [], exp: 10, points: 0, fromLevel: 1, toLevel: 1, boss: null, bossBefore: null, fromPos: 0, clearedAreas: [], rares: [] });
   assert.equal(walk(g, 0), g);
   assert.equal(walk(g, -5), g);
   assert.equal(walk(g, Number.NaN), g);
@@ -344,6 +344,7 @@ test('normalizeGame：古い記録の 見ていない成果は 消さない', ()
     toLevel: g.level,
     boss: null,
     bossBefore: null,
+    fromPos: g.totalSteps - 2345,
     clearedAreas: [],
     rares: [],
   });
@@ -369,6 +370,7 @@ test('normalizeGame：項目が欠けた記録は 初めの値で うめる', ()
     boss: { id: 'hanafubuki', left: 7000, total: 10_000 },
     // 前の残りが 無い 古い記録は「いまの位置 − 成果の歩数」（122,900歩）の ボスで うめる
     bossBefore: { id: 'hanafubuki', left: 7100, total: 10_000 },
+    fromPos: 122_900,
     clearedAreas: [],
     rares: [],
   });
@@ -408,7 +410,7 @@ test('normalizeGame：NaN や 負の数・知らない敵が入った記録は�
     exp: 0,
     points: 0,
     seen: { amagumo: 3, donburako: 1 },
-    pending: { steps: 0, enemies: ['amagumo'], exp: 0, points: 0, fromLevel: 1, toLevel: 1, boss: null, bossBefore: null, clearedAreas: [1], rares: ['donburako'] },
+    pending: { steps: 0, enemies: ['amagumo'], exp: 0, points: 0, fromLevel: 1, toLevel: 1, boss: null, bossBefore: null, fromPos: 0, clearedAreas: [1], rares: ['donburako'] },
   });
   for (const value of Object.values(g)) if (typeof value === 'number') assert.ok(Number.isFinite(value));
   // 古い形の NaN（JSON では null になる）も 直す
@@ -648,6 +650,38 @@ test('ボスの前の残り：無い 古い記録は「いまの位置 − 成�
   for (const broken of [{ id: 'nazo', left: 5 }, { id: 'amagumo', left: 5 }, { id: 'hanafubuki', left: 0 }, { id: 'hanafubuki', left: Number.NaN }, 'x']) {
     assert.deepEqual(normalizeGame({ ...base, pending: { ...pending, bossBefore: broken } }).pending?.bossBefore, { id: 'hanafubuki', left: 7000, total: 10_000 });
   }
+  const fixed = normalizeGame({ ...base, pending });
+  assert.deepEqual(normalizeGame(JSON.parse(JSON.stringify(fixed))), fixed);
+});
+
+// ---------- 成果を 作りはじめた 位置（戦闘の 場面） ----------
+
+test('成果を 作りはじめた 位置：歩く 前の 位置を 覚え、歩きたしても かわらない。次の巡りを はじめても のこる', () => {
+  let g = walk(at(121_000), 2000);
+  assert.equal(g.pending?.fromPos, 121_000);
+  g = walk(g, 1000);
+  assert.equal(g.pending?.fromPos, 121_000, '歩きたすと かわった');
+  // 年こしの峠を こえた 成果は、次の巡りを はじめて 位置が 0 に なっても 峠の 位置の まま
+  const end = walk(at(LAP_END - 500), 1500);
+  assert.equal(end.pending?.fromPos, LAP_END - 500);
+  const next = startLap(end);
+  assert.equal(next.pos, 0);
+  assert.equal(next.pending?.fromPos, LAP_END - 500);
+  // 保存して 読みこんでも のこる。2回 通しても 同じ
+  assert.equal(reload(next).pending?.fromPos, LAP_END - 500);
+  assert.deepEqual(normalizeGame(reload(next)), reload(next));
+});
+
+test('成果を 作りはじめた 位置：無い 古い記録は「いまの位置 − 成果の歩数」で うめ、こわれた値も 直す', () => {
+  const base = { v: 3, seed: 1, totalSteps: 125_000, lap: 1, pos: 125_000 };
+  const pending = { steps: 2000, enemies: [], exp: 2000, points: 0, fromLevel: 30, toLevel: 30, clearedAreas: [], rares: [] };
+  assert.equal(normalizeGame({ ...base, pending }).pending?.fromPos, 123_000);
+  assert.equal(normalizeGame({ ...base, pending: { ...pending, fromPos: 1234.7 } }).pending?.fromPos, 1234);
+  for (const broken of [-1, Number.NaN, Infinity, '9', null]) {
+    assert.equal(normalizeGame({ ...base, pending: { ...pending, fromPos: broken } }).pending?.fromPos, 123_000, String(broken));
+  }
+  // 成果の 歩数が 位置より 多い（巡りを はじめた あと）ときも 0 より 小さく しない
+  assert.equal(normalizeGame({ ...base, pos: 500, pending }).pending?.fromPos, 0);
   const fixed = normalizeGame({ ...base, pending });
   assert.deepEqual(normalizeGame(JSON.parse(JSON.stringify(fixed))), fixed);
 });

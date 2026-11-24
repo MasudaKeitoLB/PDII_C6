@@ -32,6 +32,24 @@
   width: 395px;
   height: 420px;
 }
+/* エリアの 遠景（400×140）：横に くり返し、30秒で 400px 流す（今の 遠景と ほぼ 同じ 速さ） */
+.farTile {
+  position: absolute;
+  left: 0;
+  width: calc(100% + 400px);
+  background-repeat: repeat-x;
+  background-position: 0 0;
+  animation: walk-far-tile 30s linear infinite;
+}
+@keyframes walk-far-tile {
+  from {
+    transform: none;
+  }
+  to {
+    transform: translateX(-400px);
+  }
+}
+
 /* 左右反転で つなぐと つなぎめが 目立たない */
 .flip {
   transform: scaleX(-1);

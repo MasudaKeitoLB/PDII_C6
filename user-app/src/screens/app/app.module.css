@@ -58,6 +58,21 @@
   font-size: 18px;
 }
 
+/* エリアの名前の 札は 2行：名前と、その下に 7色の 糸（7つの 小さな 丸） */
+.placeName {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.placeText {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ボスの のこりの歩数：エリアの名前の すぐ下に 小さく1行（ボスと戦っている間だけ） */
 .bossLeft {
   margin-top: 6px;

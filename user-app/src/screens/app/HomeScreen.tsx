@@ -13,11 +13,14 @@ import { GameWindow } from '../../components/GameWindow';
 import { HpBar } from '../../components/HpBar';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Screen } from '../../components/Screen';
+import { StageScene, stageBackground } from '../../components/StageScene';
+import { ThreadDots } from '../../components/ThreadDots';
 import { useAppState, useUser } from '../../flow/AppState';
 import { motionNoticeKind } from '../../lib/motionNotice';
 import { detectOs } from '../../lib/platform';
 import { dayKey, formatReceived, now } from '../../lib/dates';
 import { enemySprite } from '../../data/enemySprites';
+import { stagePlaceAt } from '../../data/stages';
 import { ENEMY_NAMES, bossAt, enemyDef, levelProgress, nextEnemyHp, placeName, stepsToNextLevel, upcomingEnemy } from '../../lib/game';
 import { formatSteps } from '../../lib/health';
 import type { EnemyId } from '../../lib/types';
@@ -34,6 +37,11 @@ const HP_GAP = 6;
 const HP_BELOW_LEFT = 160;
 /** 頭の上の バーの まん中は ここより 右に しない（文字が 大きいときも 右はしから はみ出さない） */
 const HP_CENTER_MAX = 286;
+/** 場面の 地面（道の 上はし）の 高さ。粒は エリア名・ポイントの枠の 高さから 出る */
+const GROUND_Y = 250;
+const SKY_Y = 60;
+/** 水の輪・波を 出す 高さ（道の まん中。地面から） */
+const FLOOR_GAP = 22;
 
 /**
  * H-01 ホーム（冒険）／ H-01b（文字：とても大きい）
@@ -41,7 +49,7 @@ const HP_CENTER_MAX = 286;
  */
 export function HomeScreen() {
   const user = useUser();
-  const { motionAccess, allowMotion, motionSignal, recheckMotion } = useAppState();
+  const { motionAccess, allowMotion, motionSignal, recheckMotion, walk } = useAppState();
   // 「値が届かない」は スマホ・タブレット（iPhone・iPad・Android）で開いたときだけ出す（PC のデモには センサーが無い）。
   // 画面の広さでは 決めない（広い Android タブレットでも 出すため）
   const phoneLike = detectOs() !== 'other';
@@ -86,6 +94,9 @@ export function HomeScreen() {
   const hpTone = big ? 'boss' : enemyDef(enemy).kind === 'rare' ? 'rare' : 'normal';
   const windowTop = xl ? 269 : 311;
   const sceneHeight = xl ? 404 : user.textSize === 'large' ? 441 : 436;
+  // いまいる エリアの 場面（背景・季節の ギミック・さわれる 目じるし）。とても大きいときは 地面を 30px 上げる
+  const { stage, phase } = stagePlaceAt(user.game.pos);
+  const groundY = GROUND_Y + shift;
 
   return (
     <Screen
@@ -93,9 +104,21 @@ export function HomeScreen() {
       tab="adventure"
       scene={
         <FitScene width={393} height={sceneHeight}>
-          <Place x={0} y={0}>
-            <img src={xl ? homeBgXlarge : homeBg} alt="" />
-          </Place>
+          {/* 歩いている 間は 歩きスマホ防止の 下に なるので、目じるしを 押せなくし、動きも 止める */}
+          <StageScene
+            layout="home"
+            stage={stage}
+            phase={phase}
+            seed={user.game.seed}
+            width={393}
+            height={sceneHeight}
+            groundY={groundY}
+            skyY={SKY_Y}
+            floorY={groundY + FLOOR_GAP}
+            bg={stageBackground(stage, xl ? homeBgXlarge : homeBg, shift)}
+            interactive={walk === 'idle'}
+            paused={walk !== 'idle'}
+          />
           <Place x={228} y={61}>
             <GameWindow className={s.pointWindow}>
               <img className={s.pointIcon} src={pointIcon} alt="" />
@@ -104,8 +127,10 @@ export function HomeScreen() {
             </GameWindow>
           </Place>
           <Place x={11} y={61}>
+            {/* エリア名の 札：名前と、7色の 糸（いまの 道と 色の もどった 道） */}
             <p className={s.placeName} aria-label={`いまいる所：${place}`}>
-              {place}
+              <span className={s.placeText}>{place}</span>
+              <ThreadDots pos={user.game.pos} lap={user.game.lap} />
             </p>
             {/* ボスと戦っている間だけ、のこりの歩数を 小さく1行（名前は 読み上げで伝える。絵は 右に出ている） */}
             {boss && (

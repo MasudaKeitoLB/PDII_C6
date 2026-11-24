@@ -1,0 +1,7 @@
+<svg width="33" height="9" viewBox="0 0 33 9" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<title>ギミック：dragonfly 羽を ひろげる</title>
+<path d="M3 0h9v3h-9zM21 0h6v3h-6zM3 6h9v3h-9zM21 6h6v3h-6z" fill="#DCEAF7"/>
+<path d="M12 0h3v3h-3zM18 0h3v3h-3zM27 0h3v3h-3zM12 6h3v3h-3zM18 6h3v3h-3zM27 6h3v3h-3z" fill="#B9D2EC"/>
+<path d="M0 3h6v3h-6z" fill="#1E1B18"/>
+<path d="M6 3h24v3h-24z" fill="#C2410C"/>
+</svg>
