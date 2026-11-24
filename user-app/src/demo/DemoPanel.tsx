@@ -5,7 +5,8 @@ import { ALL_ROUTES, routeInfo, type RouteId } from '../flow/routes';
 import { ADMIN_ACCOUNTS, canSeeUser, findAdmin, ROLE_LABEL } from '../lib/admin';
 import { dayKey, now } from '../lib/dates';
 import { formatSteps } from '../lib/health';
-import { fillSampleHistory, findUser, getStore, loginAs, resetAll, setAdminSession } from '../lib/store';
+import { placeName } from '../lib/game';
+import { fillSampleHistory, findUser, finishAdventure, getStore, loginAs, recordSteps, resetAll, setAdminSession } from '../lib/store';
 import styles from './DemoPanel.module.css';
 
 /** 確認パネルの幅と すきま（PC版の画面を 縮める大きさの計算に使う） */
@@ -17,6 +18,9 @@ const SAMPLE_USER_ID = 's-yamada';
 const DEMO_WALK_STEPS = 2345;
 /** 1万歩（デモ用）：ボスの手前まで 大きく進めて、ボスや エリアをこえる 動きを 確かめるため */
 const DEMO_BIG_WALK_STEPS = 10000;
+
+/** ステージを見るための 位置（累計歩数）。1エリアは 130,000歩。道の中ほどに おく（750歩の区切りに 合わせて、すぐ敵に会える） */
+const DEMO_STAGE_POSITIONS = [3000, 133000, 263000, 393000, 523000, 653000, 783000, 913000];
 
 /** 体の動きで 歩数を数えられるか（スマホでは 体の動きで、PC では 下のボタンで 歩く） */
 const MOTION_LABEL: Record<MotionAccess, string> = {
@@ -195,6 +199,31 @@ export function DemoPanel() {
             </button>
           )}
         </div>
+        <h3 className={styles.sectionTitle}>ステージを見る（デモ用）</h3>
+        <div className={styles.actions}>
+          {DEMO_STAGE_POSITIONS.map((pos, i) => (
+            <button
+              key={pos}
+              type="button"
+              className={styles.action}
+              disabled={walk !== 'idle'}
+              onClick={() => {
+                // はじめの状態にもどしてから、そのステージまで歩いたことにする（もどる向きにも 使えるように）
+                resetAll(now());
+                loginAs(SAMPLE_USER_ID);
+                const current = findUser(SAMPLE_USER_ID);
+                if (current) recordSteps(SAMPLE_USER_ID, pos - current.game.pos, now());
+                finishAdventure(SAMPLE_USER_ID);
+                navigate('home');
+              }}
+            >
+              {i < 7 ? `ステージ${i + 1}` : 'クリア後'}：{placeName(pos)}
+            </button>
+          ))}
+        </div>
+        <p className={styles.note}>
+          押すと、山田さんで はじめの状態から そのステージまで進めて ホームを開きます。目じるしを さわったり、「歩きはじめる」で 道が流れるところも 見られます。
+        </p>
         <p className={styles.note}>
           スマホでは 体の動きで歩数を数え、{STOP_AFTER_MS / 1000}秒 ふえなければ 止まったとみなします。PC では このボタンで歩き、0.5秒ごとに歩数が ふえます。止まって {UNLOCK_DELAY_MS / 1000}秒たつと 使えるようになり、冒険の成果が出ます。
         </p>
