@@ -6,11 +6,12 @@
   "description": "歩歩〜HoHo〜 利用者アプリ（はじめての設定・ログイン）の試作",
   "scripts": {
     "dev": "vite --host",
+    "dev:e2e": "vite --host --mode e2e",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host",
     "typecheck": "tsc -b",
     "test": "node --test \"src/**/*.test.ts\"",
-    "build:demo": "tsc -b && vite build --config vite.demo.config.ts && node scripts/make-artifact.mjs",
+    "build:demo": "tsc -b && vite build --config vite.demo.config.ts --mode demo && node scripts/make-artifact.mjs",
     "e2e": "node e2e/buttons.e2e.mjs"
   },
   "dependencies": {

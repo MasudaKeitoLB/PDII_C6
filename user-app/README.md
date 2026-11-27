@@ -19,11 +19,18 @@ npm run dev
 | コマンド | 内容 |
 | --- | --- |
 | `npm run dev` | 開発サーバー（保存するとすぐ反映） |
+| `npm run dev:e2e` | 動作テスト用の開発サーバー。`.env.local` に接続の値があっても、ブラウザの中だけで動く |
 | `npm run typecheck` | 型のチェック |
 | `npm run build` | 本番用のビルド（`dist/`） |
 | `npm run build:demo` | デモURL用の1ファイル版（`artifact/hoho-demo.html`） |
 | `npm test` | 歩数を数える関数・端末の見分け・案内の出し分けの 単体テスト（`src/lib/*.test.ts`） |
-| `npm run e2e` | 全ボタンの動作テスト（`e2e/buttons.e2e.mjs`）。先に `npm run dev` で開発サーバーを起動しておく。入っている Chrome を使う（Edge は `E2E_CHANNEL=msedge`、別のアドレスは `BASE=…`） |
+| `npm run e2e` | 全ボタンの動作テスト（`e2e/buttons.e2e.mjs`）。先に `npm run dev:e2e` で開発サーバーを起動しておく。入っている Chrome を使う（Edge は `E2E_CHANNEL=msedge`、別のアドレスは `BASE=…`） |
+
+### サーバーの接続（準備中：[設計](../docs/設計-タスク1-サーバー接続.md)）
+
+- 接続の値は `.env.example` を `.env.local` に写して入れます。`.env.local` は git に入りません。値はチャットやコードに貼らないでください。
+- 値が空のあいだは、今までどおり ブラウザの中だけで動きます。
+- 動作テスト（`dev:e2e`）とデモの1ファイル版（`build:demo`）は、`.env.e2e`・`.env.demo` で値を空にするので、接続の値は入りません。
 
 ## デモの使い方（確認用パネル）
 
