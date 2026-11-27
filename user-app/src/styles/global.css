@@ -87,11 +87,21 @@ p {
   border: 0;
 }
 
+/* 動きを へらす：端末の「視差効果を減らす」か、「わたし」の「動きを へらす」が 入のとき。
+   演出は 待たずに おわりの 形を 出す（待ち時間・くりかえしも なくす） */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
   }
+}
+:root[data-motion='reduce'] *,
+:root[data-motion='reduce'] *::before,
+:root[data-motion='reduce'] *::after {
+  transition-duration: 0.01ms !important;
+  animation: none !important;
 }

@@ -1,0 +1,8 @@
+<svg width="63" height="63" viewBox="0 0 63 63" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<title>ギミック：firework 中</title>
+<path d="M21 12h3v3h-3zM39 12h3v3h-3zM12 30h3v3h-3zM51 30h3v3h-3zM21 48h3v3h-3zM39 48h3v3h-3z" fill="#FFD97A"/>
+<path d="M30 12h3v3h-3zM12 21h3v3h-3zM48 21h3v3h-3zM12 39h3v3h-3zM48 39h3v3h-3zM30 51h3v3h-3z" fill="#F4A9BC"/>
+<path d="M30 15h3v3h-3zM18 24h3v3h-3zM42 24h3v3h-3zM18 36h3v3h-3zM42 36h3v3h-3zM30 45h3v3h-3z" fill="#F4A9BC" fill-opacity="0.50"/>
+<path d="M24 18h3v3h-3zM36 18h3v3h-3zM27 27h9v3h-9zM15 30h3v3h-3zM27 30h3v3h-3zM33 30h3v3h-3zM45 30h3v3h-3zM27 33h9v3h-9zM24 42h3v3h-3zM36 42h3v3h-3z" fill="#FFD97A" fill-opacity="0.50"/>
+<path d="M30 30h3v3h-3z" fill="#FFF1C4"/>
+</svg>

@@ -30,6 +30,59 @@
   color: var(--color-white);
 }
 
+/* いまいるエリアの名前：左上に 小さく（ポイントのまど x228〜 に かからない はば） */
+.placeName,
+.bossLeft {
+  width: fit-content;
+  max-width: 205px;
+  padding: 5px 12px 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 14px;
+  background: rgb(27 34 64 / 0.78);
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--color-white);
+}
+/* 文字を大きくしている人には 大きく出す。ボスの行は 数字が長いので、はば（205px）に おさまる大きさにする */
+:root[data-text-size="large"] .placeName,
+:root[data-text-size="large"] .bossLeft {
+  font-size: 18px;
+}
+:root[data-text-size="xlarge"] .placeName {
+  font-size: 20px;
+}
+:root[data-text-size="xlarge"] .bossLeft {
+  font-size: 18px;
+}
+
+/* エリアの名前の 札は 2行：名前と、その下に 7色の 糸（7つの 小さな 丸） */
+.placeName {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.placeText {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ボスの のこりの歩数：エリアの名前の すぐ下に 小さく1行（ボスと戦っている間だけ） */
+.bossLeft {
+  margin-top: 6px;
+  font-weight: 400;
+  color: var(--color-navy-sub);
+}
+.bossLeft strong {
+  color: var(--color-white);
+}
+
 /* 主人公の状態のまど：371×124（とても大きい 371×134） */
 .statusWindow {
   --name-fs: 20px;
@@ -234,4 +287,18 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+}
+
+/* ---------- 次の敵の HPバー ---------- */
+
+/* 頭の上：まん中を 敵に そろえ、下はしを 頭の 少し上に */
+.hpAbove {
+  transform: translate(-50%, -100%);
+}
+/* 足もとの下（ボス・文字が とても大きい とき）：x=160〜383 の 箱の中で 右に そろえる。
+   数が 長いときは バーが ちぢみ、主人公（右はし x=152）に 重ならない */
+.hpBelowBox {
+  display: flex;
+  justify-content: flex-end;
+  width: 223px;
 }

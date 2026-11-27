@@ -672,6 +672,811 @@ await test('38 Firefox（1秒に 10回）：数えられ、確かめる画面の
   }
 });
 
+// ---- ゲームの核（エリア・ボス・絵の無い敵）----
+console.log('ゲームの核');
+
+/** 大きな歩数は ページの中で store の関数を呼んで入れる（山田さんは はじめ 28,550歩の所に いる） */
+const walkInStore = (steps) =>
+  page.evaluate(async (n) => {
+    const s = await import('/src/lib/store.ts');
+    s.recordSteps('s-yamada', n);
+    s.finishAdventure('s-yamada');
+  }, steps);
+const YAMADA_START = 28550;
+
+await test('39 ボスの手前まで進めて 歩くと、成果に「ボス」と「あと」が出る', async () => {
+  await reset();
+  await enterSample();
+  await walkInStore(119000 - YAMADA_START);
+  await page.getByRole('button', { name: /^2,345歩 歩いて 止まったことにする/ }).click();
+  await waitHash('adventure-result');
+  await visible(page.getByText(/ボス はなふぶき\s+あと 8,655歩/), '成果の ボスの行');
+  // この歩数では レベルは上がらない（レベル29のまま）ので、成果から そのまま ホームへ
+  await btn('つづける').click();
+  await waitHash('home');
+  await visible(page.getByLabel('ボス はなふぶき あと 8,655歩'), 'ホームの ボスの残り歩数');
+  await visible(page.locator('[data-enemy="hanafubuki"]'), 'ホームの ボスの絵');
+});
+
+await test('40 エリア1をこえると、こえたことの行が出て、ホームの敵が エリア2の敵になる', async () => {
+  await reset();
+  await enterSample();
+  await visible(page.getByLabel('いまいる所：はなあかりの小道'), 'はじめのエリアの名前');
+  await page.evaluate(async (n) => {
+    const s = await import('/src/lib/store.ts');
+    s.recordSteps('s-yamada', n);
+  }, 130000 - YAMADA_START);
+  await go('adventure-result');
+  await visible(page.getByText('はなあかりの小道を こえた。次は わかばの田んぼ道'), 'こえたことの行');
+  await btn('つづける').click();
+  await waitHash('level-up');
+  await btn('つづける').click();
+  await waitHash('home');
+  await visible(page.getByLabel('いまいる所：わかばの田んぼ道'), '次のエリアの名前');
+  const enemy = await page.locator('[data-frame] [data-enemy]').first().getAttribute('data-enemy');
+  const area = await page.evaluate(async (id) => {
+    const d = await import('/src/data/enemies.ts');
+    return d.ENEMIES.find((e) => e.id === id)?.area;
+  }, enemy);
+  assert(area === 2, `ホームの敵が ${enemy}（エリア${area}）`);
+});
+
+// エリア4（うみかぜの浜）の敵は まだ絵が無い。絵ができたら、まだ絵の無い エリアに うつす
+await test('41 絵の無い敵（エリア4以降）が出ても、代わりの絵が出て、コンソールのエラーが 0件', async () => {
+  const before = problems.length;
+  await reset();
+  await enterSample();
+  // 450,000歩：エリア4の道の中。750歩の区切りに ちょうど合うので、このあと 2,345歩で 3体に会う
+  await walkInStore(450000 - YAMADA_START);
+  await go('records');
+  await go('home');
+  await visible(page.getByLabel('いまいる所：うみかぜの浜'), 'エリア4の名前');
+  await visible(page.locator('[data-frame] svg[data-placeholder]'), 'ホームの 代わりの絵');
+  await page.getByRole('button', { name: /^2,345歩 歩いて 止まったことにする/ }).click();
+  await waitHash('adventure-result');
+  await visible(page.getByRole('list', { name: /^たおした敵/ }).locator('svg[data-placeholder]'), '成果の 代わりの絵');
+  const count = await page.getByRole('list', { name: /^たおした敵/ }).locator('svg[data-placeholder]').count();
+  assert(count === 3, `代わりの絵が ${count}こ`);
+  await page.waitForTimeout(300);
+  assert(problems.length === before, problems.slice(before, before + 3).join(' / '));
+});
+
+// ---- 演出と音・設定 ----
+console.log('演出と音・設定');
+
+/** 「わたし」の 入・切の 行（aria-pressed で 入・切を 読む） */
+const prefRow = (name) => page.getByRole('button', { name: new RegExp(`^${name}`) });
+const pressedOf = async (name) => (await prefRow(name).getAttribute('aria-pressed')) === 'true';
+/** 入・切を want に そろえる */
+const setPref = async (name, want) => {
+  if ((await pressedOf(name)) !== want) await prefRow(name).click();
+  await prefRow(name).and(page.locator(`[aria-pressed="${want}"]`)).waitFor({ state: 'visible' }).catch(() => {
+    throw new Error(`${name} が ${want ? '入' : '切'}に ならない`);
+  });
+};
+/** 歩いた分を 入れて、成果の画面を 開く（ボタンを 押さずに 開くので、ボタンの 音は 入らない） */
+const openResultWithSteps = async (steps) => {
+  await page.evaluate(async (n) => {
+    const s = await import('/src/lib/store.ts');
+    s.recordSteps('s-yamada', n);
+  }, steps);
+  await go('adventure-result');
+  await visible(page.getByRole('list', { name: /^たおした敵/ }), '成果の 敵の絵');
+};
+
+await test('42 わたし：音・歩いている間の音・動きをへらす の入・切を 押して かえられ、開きなおしても のこる', async () => {
+  await reset();
+  await enterSample();
+  await go('me');
+  for (const name of ['音', '歩いている間の音', '動きをへらす']) await visible(prefRow(name), `${name} の行`);
+  assert((await pressedOf('音')) === true, '音は はじめ 入');
+  assert((await pressedOf('歩いている間の音')) === false, '歩いている間の音は はじめ 切');
+  assert((await pressedOf('動きをへらす')) === false, '動きをへらすは はじめ 切');
+  await visible(prefRow('歩いている間の音').getByText('切', { exact: true }), '切の 表示');
+  await setPref('音', false);
+  await setPref('歩いている間の音', true);
+  await setPref('動きをへらす', true);
+  await visible(prefRow('音').getByText('切', { exact: true }), '音の 切の 表示');
+  await page.reload();
+  await page.waitForSelector('aside');
+  await waitHash('me');
+  await visible(prefRow('音'), '開きなおした あとの 音の行');
+  assert((await pressedOf('音')) === false, '音の 切が のこっていない');
+  assert((await pressedOf('歩いている間の音')) === true, '歩いている間の音の 入が のこっていない');
+  assert((await pressedOf('動きをへらす')) === true, '動きをへらすの 入が のこっていない');
+  // もとに もどす
+  await setPref('音', true);
+  await setPref('歩いている間の音', false);
+  await setPref('動きをへらす', false);
+});
+
+await test('43 音が「切」のときは 鳴らさず、「入」のときは 成果の画面で 鳴らそうとする（にせの AudioContext で 数える）', async () => {
+  await page.addInitScript(() => {
+    const audio = { contexts: 0, notes: 0 };
+    window.__audio = audio;
+    const param = () => ({ value: 0, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, cancelScheduledValues() {}, setTargetAtTime() {} });
+    const node = () => ({ connect() {} });
+    class FakeAudioContext {
+      constructor() {
+        audio.contexts += 1;
+        this.state = 'running';
+        this.currentTime = 0;
+        this.destination = node();
+      }
+      resume() {
+        return Promise.resolve();
+      }
+      createGain() {
+        return { ...node(), gain: param() };
+      }
+      createOscillator() {
+        audio.notes += 1;
+        return { ...node(), type: 'sine', frequency: param(), start() {}, stop() {} };
+      }
+    }
+    window.AudioContext = FakeAudioContext;
+    window.webkitAudioContext = FakeAudioContext;
+  });
+  await page.reload();
+  await page.waitForSelector('aside');
+  await reset();
+  await enterSample();
+  await go('me');
+  await setPref('音', false);
+  await page.evaluate(() => (window.__audio.notes = 0));
+  await openResultWithSteps(2345);
+  await page.waitForTimeout(800);
+  const off = await page.evaluate(() => window.__audio.notes);
+  assert(off === 0, `切なのに ${off}回 鳴らそうとした`);
+  await btn('つづける').click();
+  await waitHash('level-up');
+  await btn('つづける').click();
+  await waitHash('home');
+  assert((await page.evaluate(() => window.__audio.notes)) === 0, '切なのに レベルアップや ボタンで 鳴らそうとした');
+
+  await go('me');
+  await setPref('音', true);
+  await page.evaluate(() => (window.__audio.notes = 0));
+  await openResultWithSteps(2345);
+  await page.waitForFunction(() => window.__audio.notes > 0, null, { timeout: 3000 }).catch(() => {
+    throw new Error('入なのに 成果の画面で 鳴らそうとしない');
+  });
+  assert((await page.evaluate(() => window.__audio.contexts)) === 1, 'AudioContext は 1つだけ 作る');
+});
+
+await test('44 動きをへらすが「入」のとき、成果の画面の アニメーションが 止まっている', async () => {
+  await reset();
+  await enterSample();
+  const animOf = () =>
+    page.evaluate(() => {
+      const li = document.querySelector('[aria-label^="たおした敵"] li');
+      const st = getComputedStyle(li);
+      return { name: st.animationName, duration: parseFloat(st.animationDuration) || 0 };
+    });
+  // 切のときは 動いている（テストが 意味を もつことの 確かめ）
+  await openResultWithSteps(2345);
+  const moving = await animOf();
+  assert(moving.name !== 'none' && moving.duration > 0.1, `切なのに 動いていない（${moving.name} ${moving.duration}s）`);
+  await btn('つづける').click();
+  await waitHash('level-up');
+  await btn('つづける').click();
+  await waitHash('home');
+
+  await reset();
+  await enterSample();
+  await go('me');
+  await setPref('動きをへらす', true);
+  await openResultWithSteps(2345);
+  const still = await animOf();
+  assert(still.name === 'none' || still.duration <= 0.001, `入なのに 動いている（${still.name} ${still.duration}s）`);
+  await btn('つづける').click();
+  await waitHash('level-up');
+  await visible(page.getByLabel(/に上がりました$/), 'レベルの 数字');
+  const sparkle = await page.evaluate(() => {
+    const st = getComputedStyle(document.querySelector('[aria-label$="に上がりました"] span:last-child'));
+    return { name: st.animationName, duration: parseFloat(st.animationDuration) || 0 };
+  });
+  assert(sparkle.name === 'none' || sparkle.duration <= 0.001, `レベルアップの 数字が 動いている（${sparkle.name}）`);
+  await btn('つづける').click();
+  await waitHash('home');
+  await go('me');
+  await setPref('動きをへらす', false);
+});
+
+// ---- アニメーション（段階B〜E）----
+console.log('アニメーション');
+
+/** 動いている 要素の animation（名前・長さ・再生の 状態） */
+const animsOf = (selector) =>
+  page.evaluate(
+    (sel) =>
+      [...document.querySelectorAll(sel)].map((e) => {
+        const st = getComputedStyle(e);
+        return { kind: e.dataset.walkAnim ?? e.dataset.enemyMotion ?? '', name: st.animationName, duration: parseFloat(st.animationDuration) || 0, play: st.animationPlayState };
+      }),
+    selector,
+  );
+const stillAnim = (a) => a.name === 'none' || a.duration <= 0.001;
+/** 道の帯の いまの 横の位置（px） */
+const roadX = () => page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector('[data-walk-anim="road"]')).transform).m41);
+const walkSceneIs = (state, timeout = TIMEOUT) =>
+  page.waitForFunction((st) => document.querySelector('[data-walk-scene]')?.dataset.walkScene === st, state, { timeout }).catch(() => {
+    throw new Error(`歩行中の 場面が ${state} に ならない`);
+  });
+/** 成果の画面の 戦闘：おわったか と HP の 数 */
+const battleState = () =>
+  page.evaluate(() => {
+    const b = document.querySelector('[data-battle]');
+    return { state: b?.dataset.battle, hp: [...(b?.querySelectorAll('[data-hp-left]') ?? [])].map((e) => Number(e.dataset.hpLeft)) };
+  });
+const battleDone = (timeout) =>
+  page.waitForFunction(() => document.querySelector('[data-battle]')?.dataset.battle === 'done', null, { timeout }).catch(() => {
+    throw new Error(`戦闘が ${timeout}ms で おわらない`);
+  });
+/** 手に入れた ポイントの 目に見える 数と、読み上げる 数 */
+const shownPoints = () =>
+  page.evaluate(() => {
+    const hidden = [...document.querySelectorAll('.visually-hidden')].find((e) => e.nextElementSibling?.getAttribute('aria-hidden') === 'true');
+    return { shown: hidden?.nextElementSibling?.textContent, read: hidden?.textContent };
+  });
+/** 成果 →（レベルアップ）→ ホーム */
+const finishResult = async () => {
+  await btn('つづける').click();
+  await page.waitForFunction(() => /^#(level-up|home)$/.test(location.hash));
+  if ((await hash()) === 'level-up') {
+    await btn('つづける').click();
+    await waitHash('home');
+  }
+};
+
+await test('45 歩行中の画面：道と主人公が 流れ、立ち止まると ゆっくり 止まる（文字は そのまま）', async () => {
+  await reset();
+  await enterSample();
+  await page.getByRole('button', { name: /^歩きはじめる/ }).click();
+  await visible(dialog('歩きスマホ防止'), '歩きスマホ防止の画面');
+  await walkSceneIs('moving');
+  const moving = await animsOf('[data-walk-anim]');
+  assert(moving.some((a) => a.kind === 'road') && moving.some((a) => a.kind === 'hero'), '道と 主人公の 動きが ない');
+  assert(moving.every((a) => !stillAnim(a) && a.play === 'running'), `流れていない（${JSON.stringify(moving.find((a) => stillAnim(a) || a.play !== 'running'))}）`);
+  const x1 = await roadX();
+  await page.waitForTimeout(300);
+  const x2 = await roadX();
+  assert(Math.abs(x2 - x1) > 1, `道の 位置が かわらない（${x1} → ${x2}）`);
+  await visible(dialog('歩きスマホ防止').getByText('歩いています', { exact: true }), '「歩いています」の 文字');
+  await visible(dialog('歩きスマホ防止').getByText('止まると、自動で使えるようになります'), '下の 文');
+  await btn('立ち止まる').click();
+  // ロックが 外れる（2.5秒）より 前に、ゆっくり 止まりおわる
+  await walkSceneIs('stopped', 2400);
+  const stopped = await animsOf('[data-walk-anim]');
+  assert(stopped.every((a) => a.play === 'paused'), '止まっても 流れている');
+  const y1 = await roadX();
+  await page.waitForTimeout(300);
+  const y2 = await roadX();
+  assert(Math.abs(y2 - y1) < 0.01, `止まっても 道が うごく（${y1} → ${y2}）`);
+  await dialog('歩きスマホ防止').waitFor({ state: 'detached', timeout: 10000 });
+});
+
+await test('46 成果の画面：戦闘で HPバーが 出て 750 → 0 に へり、おわると +30。画面を さわると すぐ おわる', async () => {
+  await reset();
+  await enterSample();
+  await openResultWithSteps(2345);
+  await visible(page.locator('[data-battle] [data-hp-left]'), '戦闘の HPバー');
+  const first = await battleState();
+  assert(first.state === 'playing', 'はじめから おわっている');
+  assert(first.hp.length === 3 && first.hp.every((v) => v === 750), `はじめの HP が ${first.hp}`);
+  // 文字と 絵は はじめから ある
+  await visible(page.getByRole('list', { name: /^たおした敵/ }), 'たおした敵の 列');
+  await battleDone(8000);
+  const last = await battleState();
+  assert(last.hp.every((v) => v === 0), `おわりの HP が ${last.hp}`);
+  const pts = await shownPoints();
+  assert(pts.shown === '+30' && pts.read === '+30', `ポイントが ${JSON.stringify(pts)}`);
+  // もう一度 開いて、すぐ 画面を さわると すぐ おわりの 形
+  await reset();
+  await enterSample();
+  await openResultWithSteps(2345);
+  assert((await battleState()).state === 'playing', '2回目が はじめから おわっている');
+  await page.getByRole('heading', { name: 'おかえりなさい！' }).click();
+  await battleDone(600);
+  const skipped = await battleState();
+  assert(skipped.hp.every((v) => v === 0), `さわった あとの HP が ${skipped.hp}`);
+  assert((await shownPoints()).shown === '+30', 'さわった あとの ポイントが +30 でない');
+  await finishResult();
+});
+
+await test('47 ホーム：次の敵の HPバーと「あと ○歩」が 歩いた歩数と 合う（ボスは ボスの残り）', async () => {
+  await reset();
+  await enterSample();
+  const hpOf = () =>
+    page.evaluate(() => {
+      const box = document.querySelector('[data-next-hp]');
+      const el = box?.querySelector('[data-hp-left]');
+      const fill = el?.querySelector('span > span');
+      return {
+        kind: box?.dataset.nextHp,
+        left: Number(el?.dataset.hpLeft),
+        total: Number(el?.dataset.hpTotal),
+        text: el?.textContent ?? '',
+        ratio: fill ? fill.offsetWidth / fill.parentElement.clientWidth : NaN,
+      };
+    });
+  let walked = 0;
+  for (const add of [0, 300, 450, 749]) {
+    if (add > 0) {
+      await walkInStore(add);
+      walked += add;
+      await go('records');
+      await go('home');
+    }
+    // 道中は 750歩ごとに 出会う。次の出会いまで = 750 − （いまの位置 ÷ 750 の あまり）
+    const expected = 750 - ((YAMADA_START + walked) % 750);
+    const hp = await hpOf();
+    assert(hp.kind === 'enemy' && hp.left === expected && hp.total === 750, `${walked}歩で ${JSON.stringify(hp)}（${expected}歩の はず）`);
+    assert(hp.text.includes(`あと ${expected}歩`), `${walked}歩で 文字が「${hp.text}」`);
+    assert(Math.abs(hp.ratio - expected / 750) < 0.03, `${walked}歩で バーの 長さが ${hp.ratio.toFixed(2)}`);
+    await visible(page.getByLabel(`次の敵に 会うまで あと ${expected}歩`), '次の敵までの 読み上げ');
+  }
+  // ボス：のこりの歩数（左上の 行と 同じ数）
+  await walkInStore(121000 - YAMADA_START - walked);
+  await go('records');
+  await go('home');
+  const boss = await hpOf();
+  assert(boss.kind === 'boss' && boss.left === 9000 && boss.total === 10000, `ボスの HP が ${JSON.stringify(boss)}`);
+  assert(boss.text.includes('あと 9,000歩'), `ボスの 文字が「${boss.text}」`);
+  assert(Math.abs(boss.ratio - 0.9) < 0.03, `ボスの バーの 長さが ${boss.ratio.toFixed(2)}`);
+  await visible(page.getByLabel('ボス はなふぶき あと 9,000歩'), '左上の ボスの 行');
+  // 文字の大きさ（ふつう・大きい・とても大きい）で、次の敵の バーが 主人公・ポイントの枠・エリア名・ボスの行に 重ならず、場面から はみ出さない
+  const setSize = (size) =>
+    page.evaluate(async (sz) => {
+      const s = await import('/src/lib/store.ts');
+      s.setTextSize('s-yamada', sz);
+    }, size);
+  const hpOverlap = () =>
+    page.evaluate(() => {
+      const r = document.querySelector('[data-next-hp] [data-hp-left]').getBoundingClientRect();
+      const f = document.querySelector('[data-frame]').getBoundingClientRect();
+      const hit = (sel) => {
+        const o = document.querySelector(sel)?.getBoundingClientRect();
+        return Boolean(o) && r.left < o.right && o.left < r.right && r.top < o.bottom && o.top < r.bottom;
+      };
+      return {
+        hero: hit('[data-frame] img[data-hero]'),
+        point: hit('[class*="pointWindow"]'),
+        place: hit('[aria-label^="いまいる所"]'),
+        bossRow: hit('[aria-label^="ボス "]'),
+        outside: r.left < f.left || r.right > f.right,
+      };
+    });
+  const noOverlapEachSize = async (label, text) => {
+    for (const size of ['normal', 'large', 'xlarge']) {
+      await setSize(size);
+      await go('records');
+      await go('home');
+      const hp = await hpOf();
+      assert(hp.text.includes(text), `${label}・${size}：文字が「${hp.text}」`);
+      const o = await hpOverlap();
+      assert(Object.values(o).every((v) => !v), `${label}・${size}：重なっている ${JSON.stringify(o)}`);
+    }
+  };
+  try {
+    await noOverlapEachSize('ボス（あと 9,000歩）', 'あと 9,000歩');
+    // ボスの はじめ（いちばん 長い 数「あと 10,000歩」）
+    await reset();
+    await enterSample();
+    await walkInStore(120000 - YAMADA_START);
+    await noOverlapEachSize('ボスの はじめ', 'あと 10,000歩');
+    // ふつうの敵（頭の上・とても大きいときは 足もとの下）
+    await reset();
+    await enterSample();
+    await noOverlapEachSize('ふつうの敵', 'あと 700歩');
+  } finally {
+    await setSize('normal');
+  }
+});
+
+/** 動きが 止まっているかを まとめて 確かめる（ホームの敵・歩行中の道・戦闘・画面に 重ねる 演出） */
+const expectStill = async (label) => {
+  await reset();
+  await enterSample();
+  await go('home');
+  const enemy = await animsOf('[data-enemy-motion], [data-enemy-motion] *');
+  assert(enemy.length >= 1 && enemy.every(stillAnim), `${label}：ホームの敵が 動いている（${JSON.stringify(enemy.find((a) => !stillAnim(a)))}）`);
+  // 歩行中：はじめから 止まった 絵
+  await page.getByRole('button', { name: /^歩きはじめる/ }).click();
+  await visible(dialog('歩きスマホ防止'), '歩きスマホ防止の画面');
+  await walkSceneIs('still');
+  const walkAnims = await animsOf('[data-walk-anim]');
+  assert(walkAnims.length > 0 && walkAnims.every(stillAnim), `${label}：歩行中の 道が 動いている（${JSON.stringify(walkAnims.find((a) => !stillAnim(a)))}）`);
+  await btn('立ち止まる').click();
+  await dialog('歩きスマホ防止').waitFor({ state: 'detached', timeout: 10000 });
+  // 戦闘：開いた ときから 結果（たおした・ポイント）だけ
+  await openResultWithSteps(2345);
+  const st = await battleState();
+  assert(st.state === 'done', `${label}：戦闘が はじめから おわっていない`);
+  assert(st.hp.length >= 3 && st.hp.every((v) => v === 0), `${label}：戦闘の HP が ${st.hp}`);
+  const pts = await shownPoints();
+  assert(pts.shown === pts.read, `${label}：ポイントが すぐ 出ない（${JSON.stringify(pts)}）`);
+  const battleAnims = await animsOf('[data-battle] *');
+  assert(battleAnims.every(stillAnim), `${label}：戦闘の 中で 動いている（${JSON.stringify(battleAnims.find((a) => !stillAnim(a)))}）`);
+  // [data-battle] の 外の 画面に 重ねる 演出（レアの 光）も 止まって 見えない
+  const overlay = await page.evaluate(() => {
+    const root = document.querySelector('[data-battle-overlay]');
+    if (!root) return null;
+    return {
+      skip: root.hasAttribute('data-skip'),
+      parts: [...root.querySelectorAll('*')].map((e) => {
+        const cs = getComputedStyle(e);
+        return { opacity: Number(cs.opacity), anim: cs.animationName === 'none' || (parseFloat(cs.animationDuration) || 0) <= 0.001, trans: (parseFloat(cs.transitionDuration) || 0) <= 0.001 };
+      }),
+    };
+  });
+  assert(overlay && overlay.skip && overlay.parts.length > 0, `${label}：画面に 重ねる 演出が ない（${JSON.stringify(overlay)}）`);
+  assert(overlay.parts.every((x) => x.opacity === 0 && x.anim && x.trans), `${label}：画面に 重ねる 演出が 動いている（${JSON.stringify(overlay.parts)}）`);
+  await finishResult();
+};
+
+await test('48 動きをへらす（わたしの 設定・端末の 視差効果を減らす）のとき、ホームの敵・歩行中の道・戦闘の 動きが 止まっている', async () => {
+  // 「わたし」の 動きをへらす
+  await reset();
+  await enterSample();
+  await go('me');
+  await setPref('動きをへらす', true);
+  try {
+    await expectStill('わたしの 設定');
+  } finally {
+    await go('me');
+    await setPref('動きをへらす', false);
+  }
+  // 端末の「視差効果を減らす」（prefers-reduced-motion）
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  try {
+    await expectStill('端末の 設定');
+  } finally {
+    await page.emulateMedia({ reducedMotion: null });
+  }
+});
+
+/** にせの AudioContext（43 と 同じ）。鳴らそうとした 音の 数を window.__audio.notes に 数える */
+const fakeAudio = () => {
+  const audio = { contexts: 0, notes: 0 };
+  window.__audio = audio;
+  const param = () => ({ value: 0, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, cancelScheduledValues() {}, setTargetAtTime() {} });
+  const node = () => ({ connect() {} });
+  class FakeAudioContext {
+    constructor() {
+      audio.contexts += 1;
+      this.state = 'running';
+      this.currentTime = 0;
+      this.destination = node();
+    }
+    resume() {
+      return Promise.resolve();
+    }
+    createGain() {
+      return { ...node(), gain: param() };
+    }
+    createOscillator() {
+      audio.notes += 1;
+      return { ...node(), type: 'sine', frequency: param(), start() {}, stop() {} };
+    }
+  }
+  window.AudioContext = FakeAudioContext;
+  window.webkitAudioContext = FakeAudioContext;
+};
+
+await test('49 成果の画面を 開いたまま 歩きはじめても、ロックの下で 音を 鳴らしなおさず、戦闘は おわりの 形', async () => {
+  if (!(await page.evaluate(() => Boolean(window.__audio)))) {
+    await page.addInitScript(fakeAudio);
+    await page.reload();
+    await page.waitForSelector('aside');
+  }
+  await reset();
+  await enterSample();
+  await go('me');
+  await setPref('音', true);
+  // ボタンの 音を 数えないよう、成果の画面を 開く 前に 0 に もどす
+  await page.evaluate(() => (window.__audio.notes = 0));
+  await openResultWithSteps(2345);
+  // 1体目を たおした 音（約1.4秒）が 鳴るのを 待つ（ここまで 画面には さわらない）
+  await page.waitForFunction(() => window.__audio.notes > 0, null, { timeout: 4000 }).catch(() => {
+    throw new Error('成果の画面で 音を 鳴らそうとしない');
+  });
+  await page.waitForTimeout(300);
+  const before = await page.evaluate(() => window.__audio.notes);
+  // 画面に さわらず 体の動きで 歩く（2秒ごとに 歩数が 記録されて 成果が かわる）
+  await walkMotion(8);
+  await visible(dialog('歩きスマホ防止'), '歩きスマホ防止の画面');
+  assert((await battleState()).state === 'done', '歩いている間も 戦闘が 動いている');
+  await dialog('歩きスマホ防止').waitFor({ state: 'detached', timeout: 10000 });
+  await page.waitForTimeout(2000);
+  const after = await page.evaluate(() => window.__audio.notes);
+  assert(after === before, `歩いている間・止まった あとに ${after - before}回 鳴らそうとした`);
+  await finishResult();
+});
+
+// ---- ステージ（エリアごとの 場面と ギミック）----
+console.log('ステージ');
+
+/** その エリアの 道の はじめ（＋1,000歩）まで 進めて、ホームを 開く（エリア1は 山田さんの はじめの 位置のまま） */
+const openStageHome = async (area) => {
+  await reset();
+  await enterSample();
+  const target = (area - 1) * 130000 + 1000;
+  if (target > YAMADA_START) await walkInStore(target - YAMADA_START);
+  await go('records');
+  await go('home');
+  await page.locator(`[data-stage="area${area}"][data-layout="home"]`).waitFor({ state: 'attached' }).catch(() => {
+    throw new Error(`エリア${area}の 場面が 出ない`);
+  });
+};
+/** ホームの 場面の ようす（data 属性・背景の 絵・ギミック・7色の 糸） */
+const stageInfo = () =>
+  page.evaluate(() => {
+    const st = document.querySelector('[data-stage][data-layout="home"]');
+    const bg = st?.querySelector('img[data-stage-bg]');
+    return {
+      stage: st?.dataset.stage,
+      time: st?.dataset.time,
+      weather: st?.dataset.weather,
+      motion: st?.dataset.motion,
+      paused: st?.hasAttribute('data-paused'),
+      // 読み上げられる もの（aria-hidden の 外）。押せる 目じるしの ボタンだけの はず
+      exposed: st
+        ? [...st.querySelectorAll('*')]
+            .filter((e) => !e.closest('[aria-hidden="true"]'))
+            .map((e) => (e.matches('button[data-stage-tap][aria-label]') ? 'tap' : `${e.tagName.toLowerCase()}.${e.getAttribute('class') ?? ''}`))
+        : null,
+      // 描いている 粒（動く 物）の 数
+      parts: st?.querySelectorAll('[data-part]').length ?? 0,
+      bg: bg ? { art: bg.dataset.stageBg, loaded: bg.complete && bg.naturalWidth > 0 } : null,
+      gimmicks: [...(st?.querySelectorAll('[data-gimmick]') ?? [])].map((e) => e.dataset.gimmick),
+      threads: [...document.querySelectorAll('[aria-label^="いまいる所"] [data-thread-state]')].map((e) => e.dataset.threadState),
+    };
+  });
+/**
+ * 目じるしの ボタンが 主人公・敵・HPバー・ポイントの枠・エリア名・ボスの行に 重ならず、場面から はみ出さず、小さすぎない。
+ * くらべる 相手が 見つからないときは「重ならない」と せず、missing に 入れる（ボスの行は needBoss の ときだけ）
+ */
+const tapOverlap = (needBoss) =>
+  page.evaluate((needBoss) => {
+    const r = document.querySelector('[data-stage-tap]').getBoundingClientRect();
+    const f = document.querySelector('[data-frame]').getBoundingClientRect();
+    const sc = document.querySelector('[data-stage][data-layout="home"]').getBoundingClientRect().width / 393;
+    const missing = [];
+    const hit = (name, sel, required = true) => {
+      const el = document.querySelector(sel);
+      if (!el) {
+        if (required) missing.push(name);
+        return false;
+      }
+      const o = el.getBoundingClientRect();
+      return r.left < o.right && o.left < r.right && r.top < o.bottom && o.top < r.bottom;
+    };
+    const hits = {
+      hero: hit('hero', '[data-frame] img[data-hero]'),
+      enemy: hit('enemy', '[data-frame] [data-enemy-motion]'),
+      hp: hit('hp', '[data-next-hp] [data-hp-left]'),
+      point: hit('point', '[class*="pointWindow"]'),
+      place: hit('place', '[aria-label^="いまいる所"]'),
+      bossRow: hit('bossRow', '[aria-label^="ボス "]', needBoss),
+    };
+    // 押せる 大きさ：場面の 座標で はば 54px・高さ 44px 以上
+    return { missing, hits, outside: r.left < f.left || r.right > f.right, small: r.width < 54 * sc - 0.5 || r.height < 44 * sc - 0.5 };
+  }, needBoss);
+const expectTapClear = async (where, needBoss = false) => {
+  const o = await tapOverlap(needBoss);
+  assert(o.missing.length === 0, `${where}：くらべる 相手が 出ていない（${o.missing}）`);
+  const bad = Object.entries(o.hits)
+    .filter(([, v]) => v)
+    .map(([k]) => k);
+  assert(bad.length === 0 && !o.outside && !o.small, `${where}：目じるしが 重なる・はみ出す・小さい ${JSON.stringify(o)}`);
+};
+const STAGE_CASES = [
+  { area: 1, tap: '桜の木', weathers: ['sunny', 'cloudy'] },
+  { area: 3, tap: '風鈴', weathers: ['sunny'] },
+  // 柿の木は 主人公の 左（エリア名の 札の 下）
+  { area: 5, tap: '柿の木', weathers: ['sunny', 'cloudy'] },
+  { area: 6, tap: '縁側の家', weathers: ['snow', 'sunny'] },
+];
+
+await test('50 エリア1・3・5・6 の ホーム：エリアの 場面（data-stage）・ギミック・目じるしの ボタン・7色の 糸が 出ている', async () => {
+  for (const c of STAGE_CASES) {
+    await openStageHome(c.area);
+    const info = await stageInfo();
+    const where = `エリア${c.area}`;
+    assert(info.stage === `area${c.area}`, `${where}：data-stage が ${info.stage}`);
+    assert(['morning', 'day', 'evening', 'night'].includes(info.time), `${where}：時間帯が ${info.time}`);
+    assert(c.weathers.includes(info.weather), `${where}：天気が ${info.weather}`);
+    assert(info.motion === 'moving' && !info.paused, `${where}：動いていない（${info.motion} ${info.paused}）`);
+    assert(
+      info.exposed?.length === 1 && info.exposed[0] === 'tap',
+      `${where}：押せる 目じるしの ほかに 読み上げられる ものが ある（${JSON.stringify(info.exposed)}）`,
+    );
+    assert(info.parts >= 1 && info.parts <= 12, `${where}：描いている 粒が ${info.parts}こ`);
+    assert(info.bg && info.bg.loaded, `${where}：背景の 絵が 出ていない（${JSON.stringify(info.bg)}）`);
+    assert(info.gimmicks.length >= 1, `${where}：ギミックが ない`);
+    await visible(btn(c.tap), `${where}の 目じるし「${c.tap}」`);
+    // 7色の 糸：いまの 道が 1つ、もどった 道が エリアの 番号 − 1
+    assert(info.threads.length === 7, `${where}：糸が ${info.threads.length}つ`);
+    assert(info.threads[c.area - 1] === 'current', `${where}：いまの 道の 糸が ${info.threads[c.area - 1]}`);
+    assert(info.threads.filter((t) => t === 'restored').length === c.area - 1, `${where}：もどった 糸が ${info.threads}`);
+    await expectTapClear(where);
+  }
+  // 文字の 大きさを かえても 目じるしは 重ならない（エリア1・ボスの 手前）
+  const setSize = (size) =>
+    page.evaluate(async (sz) => {
+      const s = await import('/src/lib/store.ts');
+      s.setTextSize('s-yamada', sz);
+    }, size);
+  try {
+    await openStageHome(1);
+    await walkInStore(121000 - YAMADA_START);
+    for (const size of ['normal', 'large', 'xlarge']) {
+      await setSize(size);
+      await go('records');
+      await go('home');
+      await visible(page.getByLabel(/^ボス はなふぶき/), 'ボスの行');
+      await expectTapClear(`ボス・${size}`, true);
+    }
+  } finally {
+    await setSize('normal');
+  }
+});
+
+await test('51 目じるしを さわると 反応する（data-tapped が ふえる・音は 設定を 守る）。歩行中は 押せない', async () => {
+  if (!(await page.evaluate(() => Boolean(window.__audio)))) {
+    await page.addInitScript(fakeAudio);
+    await page.reload();
+    await page.waitForSelector('aside');
+  }
+  await openStageHome(3);
+  const tap = page.locator('[data-stage-tap]');
+  const tapped = async () => Number(await tap.getAttribute('data-tapped'));
+  assert((await tapped()) === 0, 'はじめから さわった ことに なっている');
+  // 音 入：さわると 小さな 鈴を 鳴らそうとする
+  await go('me');
+  await setPref('音', true);
+  await go('home');
+  await page.evaluate(() => (window.__audio.notes = 0));
+  await btn('風鈴').click();
+  await page.waitForFunction(() => document.querySelector('[data-stage-tap]')?.dataset.tapped === '1').catch(() => {
+    throw new Error('さわっても data-tapped が かわらない');
+  });
+  assert((await tap.getAttribute('data-reacting')) === 'true', 'さわっても 反応して いない');
+  await page.waitForFunction(() => window.__audio.notes > 0, null, { timeout: 2000 }).catch(() => {
+    throw new Error('音が 入なのに 鳴らそうとしない');
+  });
+  // 反応は しばらくで おわる
+  await page.waitForFunction(() => document.querySelector('[data-stage-tap]')?.dataset.reacting === 'false', null, { timeout: 4000 }).catch(() => {
+    throw new Error('反応が おわらない');
+  });
+  // 音 切：さわっても 鳴らさない（反応は する）
+  await go('me');
+  await setPref('音', false);
+  await go('home');
+  await page.evaluate(() => (window.__audio.notes = 0));
+  await btn('風鈴').click();
+  await page.waitForFunction(() => document.querySelector('[data-stage-tap]')?.dataset.tapped === '1').catch(() => {
+    throw new Error('音が 切の とき、さわっても 反応しない');
+  });
+  await page.waitForTimeout(400);
+  assert((await page.evaluate(() => window.__audio.notes)) === 0, '音が 切なのに 鳴らそうとした');
+  await go('me');
+  await setPref('音', true);
+  await go('home');
+  // 歩行中：目じるしは 押せず（disabled・ロックの 下）、場面も 止まる
+  const before = await tapped();
+  await page.getByRole('button', { name: /^歩きはじめる/ }).click();
+  await visible(dialog('歩きスマホ防止'), '歩きスマホ防止の画面');
+  assert(await tap.isDisabled(), '歩行中なのに 目じるしが 押せる');
+  assert((await stageInfo()).paused, '歩行中なのに ホームの 場面が 止まっていない');
+  const covered = await page.evaluate(() => {
+    const r = document.querySelector('[data-stage-tap]').getBoundingClientRect();
+    const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return !top?.closest('[data-stage-tap]');
+  });
+  assert(covered, '歩行中なのに 目じるしが ロックの 上に 出ている');
+  await tap.click({ force: true, timeout: 1500 }).catch(() => {});
+  assert((await tapped()) === before, '歩行中に さわった ことに なった');
+  await btn('立ち止まる').click();
+  await dialog('歩きスマホ防止').waitFor({ state: 'detached', timeout: 10000 });
+  if ((await hash()) !== 'home') await finishResult();
+  await go('home');
+  await page.locator('[data-stage-tap]:not([disabled])').waitFor({ state: 'attached' }).catch(() => {
+    throw new Error('止まった あとも 目じるしが 押せない');
+  });
+});
+
+/** 動きを へらす ときの ステージの 場面：静かな 絵（data-motion="still"）で、どの 動きも 止まっている */
+const expectStageStill = async (label) => {
+  await openStageHome(1);
+  const info = await stageInfo();
+  assert(info.motion === 'still', `${label}：ホームの 場面が ${info.motion}`);
+  assert(!info.gimmicks.includes('petals'), `${label}：花びらが 舞っている`);
+  await btn('桜の木').click();
+  await page.waitForFunction(() => document.querySelector('[data-stage-tap]')?.dataset.tapped === '1');
+  const home = await animsOf('[data-stage] *');
+  assert(home.every(stillAnim), `${label}：ホームの 場面が 動いている（${JSON.stringify(home.find((a) => !stillAnim(a)))}）`);
+  // 歩行中の 場面
+  await page.getByRole('button', { name: /^歩きはじめる/ }).click();
+  await visible(dialog('歩きスマホ防止'), '歩きスマホ防止の画面');
+  await walkSceneIs('still');
+  const walkStage = await page.evaluate(() => document.querySelector('[data-stage][data-layout="walk"]')?.dataset.motion);
+  assert(walkStage === 'still', `${label}：歩行中の 場面が ${walkStage}`);
+  const walking = await animsOf('[data-stage][data-layout="walk"] *');
+  assert(walking.every(stillAnim), `${label}：歩行中の 場面が 動いている（${JSON.stringify(walking.find((a) => !stillAnim(a)))}）`);
+  await btn('立ち止まる').click();
+  await dialog('歩きスマホ防止').waitFor({ state: 'detached', timeout: 10000 });
+  // 成果の 画面（戦闘）の 場面
+  await openResultWithSteps(2345);
+  const battleStage = await page.evaluate(() => document.querySelector('[data-stage][data-layout="battle"]')?.dataset.motion);
+  assert(battleStage === 'still', `${label}：戦闘の 場面が ${battleStage}`);
+  const battle = await animsOf('[data-stage][data-layout="battle"] *');
+  assert(battle.every(stillAnim), `${label}：戦闘の 場面が 動いている（${JSON.stringify(battle.find((a) => !stillAnim(a)))}）`);
+  await finishResult();
+};
+
+await test('52 動きをへらす（わたしの 設定・端末の 視差効果を減らす）のとき、ステージの ギミックの 動きが 止まる', async () => {
+  // 切のときは 動いている（テストが 意味を もつことの 確かめ）
+  await openStageHome(1);
+  const moving = await animsOf('[data-stage] [data-gimmick] *');
+  assert(moving.some((a) => !stillAnim(a) && a.play === 'running'), 'ふだんの ときに ギミックが 動いていない');
+  await go('me');
+  await setPref('動きをへらす', true);
+  try {
+    await expectStageStill('わたしの 設定');
+  } finally {
+    await go('me');
+    await setPref('動きをへらす', false);
+  }
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  try {
+    await expectStageStill('端末の 設定');
+  } finally {
+    await page.emulateMedia({ reducedMotion: null });
+  }
+});
+
+await test('53 歩行中に 止まって また 歩いても、ギミックが 消えて 出なおさない（一回きりの 動きを やりなおさない）', async () => {
+  await reset();
+  await enterSample();
+  const walkGimmicks = '[data-stage][data-layout="walk"] [data-gimmick]';
+  const opacities = () => page.evaluate((sel) => [...document.querySelectorAll(sel)].map((e) => Number(getComputedStyle(e).opacity)), walkGimmicks);
+  await walkMotion(6);
+  await visible(dialog('歩きスマホ防止'), '歩きスマホ防止の画面');
+  // ふわっと 出おわる（2.5秒）まで 待つ
+  await page
+    .waitForFunction(
+      (sel) => {
+        const list = [...document.querySelectorAll(sel)];
+        return list.length > 0 && list.every((e) => Number(getComputedStyle(e).opacity) > 0.99);
+      },
+      walkGimmicks,
+      { timeout: 6000 },
+    )
+    .catch(() => {
+      throw new Error('歩行中の ギミックが 出ない');
+    });
+  const parts = await page.locator('[data-stage][data-layout="walk"] [data-part]').count();
+  assert(parts >= 1 && parts <= 12, `歩行中の 粒が ${parts}こ`);
+  // 止まる（ゆっくり 止まっている 間に）→ ロックが 外れる（2.5秒）前に また 歩く
+  await page.waitForFunction(() => ['stopping', 'stopped'].includes(document.querySelector('[data-walk-scene]')?.dataset.walkScene), null, { timeout: 6000 }).catch(() => {
+    throw new Error('歩行中の 場面が 止まらない');
+  });
+  const again = walkMotion(5);
+  await walkSceneIs('moving', 4000);
+  const seen = [];
+  for (let i = 0; i < 5; i++) {
+    seen.push(...(await opacities()));
+    await page.waitForTimeout(150);
+  }
+  await again;
+  assert(seen.length > 0 && seen.every((o) => o > 0.95), `また 歩くと ギミックが うすく なった（${seen.map((o) => o.toFixed(2)).join(' ')}）`);
+  await dialog('歩きスマホ防止').waitFor({ state: 'detached', timeout: 12000 });
+  await page.waitForFunction(() => /^#(adventure-result|home)$/.test(location.hash));
+  if ((await hash()) === 'adventure-result') await finishResult();
+});
+
 // ---- まとめ ----
 await test('27 画面のエラー・警告が出ていない', async () => {
   const filtered = problems.filter((p) => !/favicon\.ico|fonts\.(googleapis|gstatic)/i.test(p));

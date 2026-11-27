@@ -1,34 +1,47 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 import homeBg from '../../assets/scene/home-bg.svg';
 import homeBgXlarge from '../../assets/scene/home-bg-xlarge.svg';
-import enemyAmagumo from '../../assets/sprite/enemy-amagumo.svg';
-import enemyHappappa from '../../assets/sprite/enemy-happappa.svg';
-import enemyIshikoron from '../../assets/sprite/enemy-ishikoron-small.svg';
 import hero from '../../assets/sprite/hero.svg';
 import pointIcon from '../../assets/icon/point.svg';
 import starIcon from '../../assets/icon/star.svg';
 import { Button } from '../../components/Button';
+import { EnemyMotion } from '../../components/EnemyMotion';
+import { EnemySprite } from '../../components/EnemySprite';
 import { ExpBar } from '../../components/ExpBar';
 import { FitScene, Place } from '../../components/FitScene';
 import { GameWindow } from '../../components/GameWindow';
+import { HpBar } from '../../components/HpBar';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Screen } from '../../components/Screen';
+import { StageScene, stageBackground } from '../../components/StageScene';
+import { ThreadDots } from '../../components/ThreadDots';
 import { useAppState, useUser } from '../../flow/AppState';
 import { motionNoticeKind } from '../../lib/motionNotice';
 import { detectOs } from '../../lib/platform';
 import { dayKey, formatReceived, now } from '../../lib/dates';
-import { levelProgress, stepsToNextLevel, upcomingEnemy } from '../../lib/game';
+import { enemySprite } from '../../data/enemySprites';
+import { stagePlaceAt } from '../../data/stages';
+import { ENEMY_NAMES, bossAt, enemyDef, levelProgress, nextEnemyHp, placeName, stepsToNextLevel, upcomingEnemy } from '../../lib/game';
 import { formatSteps } from '../../lib/health';
 import type { EnemyId } from '../../lib/types';
 import s from './app.module.css';
 
-/** 次に会う敵の絵と、場面の中の位置（足もとを 道の上 y=254 にそろえる） */
-const ENEMY_SPRITES: Record<EnemyId, { src: string; x: number; width: number; height: number; scale: number }> = {
-  amagumo: { src: enemyAmagumo, x: 258, width: 80, height: 70, scale: 1 },
-  happappa: { src: enemyHappappa, x: 268, width: 60, height: 70, scale: 1 },
-  // いしころんは 小さい絵しかないので、同じ割合で大きくして出す
-  ishikoron: { src: enemyIshikoron, x: 264, width: 42, height: 36, scale: 1.6 },
-};
+/** 次に会う敵の 場面の中の位置（左はし）。足もとは 道の上 y=254 にそろえる */
+const ENEMY_X = 258;
+/** 今ある3体（Figma の絵）は 今の位置を そのまま残す */
+const OLD_ENEMY_X: Partial<Record<EnemyId, number>> = { amagumo: 258, happappa: 268, ishikoron: 264 };
+const ENEMY_FOOT_Y = 254;
+/** 次の敵の HPバー：頭の上なら 絵との すきま、足もとの下なら 足もととの すきま */
+const HP_GAP = 6;
+/** 足もとの下の バーは x=160〜383 の 中に 右を そろえて 出す（主人公 x=67〜152 に 重ねない。長いときは バーが ちぢむ） */
+const HP_BELOW_LEFT = 160;
+/** 頭の上の バーの まん中は ここより 右に しない（文字が 大きいときも 右はしから はみ出さない） */
+const HP_CENTER_MAX = 286;
+/** 場面の 地面（道の 上はし）の 高さ。粒は エリア名・ポイントの枠の 高さから 出る */
+const GROUND_Y = 250;
+const SKY_Y = 60;
+/** 水の輪・波を 出す 高さ（道の まん中。地面から） */
+const FLOOR_GAP = 22;
 
 /**
  * H-01 ホーム（冒険）／ H-01b（文字：とても大きい）
@@ -36,7 +49,7 @@ const ENEMY_SPRITES: Record<EnemyId, { src: string; x: number; width: number; he
  */
 export function HomeScreen() {
   const user = useUser();
-  const { motionAccess, allowMotion, motionSignal, recheckMotion } = useAppState();
+  const { motionAccess, allowMotion, motionSignal, recheckMotion, walk } = useAppState();
   // 「値が届かない」は スマホ・タブレット（iPhone・iPad・Android）で開いたときだけ出す（PC のデモには センサーが無い）。
   // 画面の広さでは 決めない（広い Android タブレットでも 出すため）
   const phoneLike = detectOs() !== 'other';
@@ -64,10 +77,26 @@ export function HomeScreen() {
   const reached = todaySteps >= goal;
   const lastSync = user.lastSyncAt ? new Date(user.lastSyncAt) : null;
   const enemy = upcomingEnemy(user.game);
-  const sprite = ENEMY_SPRITES[enemy];
+  // ボス（160×160）は ポイントの枠に 重ならないよう 小さくして出す（とても大きいときは さらに小さく）
+  const big = enemyDef(enemy).kind === 'boss' || enemyDef(enemy).kind === 'ura';
+  const enemyScale = big ? (xl ? 0.6 : 0.75) : 1;
+  const enemyHeight = enemySprite(enemy).height * enemyScale;
+  // いまいるエリアの名前と、ボスと戦っている間の のこりの歩数
+  const place = placeName(user.game.pos);
+  const boss = bossAt(user.game.pos);
   const shift = xl ? -30 : 0; // とても大きいときは 絵を小さくして 数字と文字を優先する（H-01b 注記）
+  // 次の敵の HPバーと「あと ○歩」。ふつうは 頭の上。ボスと 文字が「とても大きい」ときは 頭の上に
+  // 場所が ない（ポイントの枠に 重なる）ので 足もとの 下に 右を そろえて出す
+  const hp = nextEnemyHp(user.game);
+  const enemyX = OLD_ENEMY_X[enemy] ?? ENEMY_X;
+  const enemyFootY = ENEMY_FOOT_Y + shift;
+  const hpAbove = !big && !xl;
+  const hpTone = big ? 'boss' : enemyDef(enemy).kind === 'rare' ? 'rare' : 'normal';
   const windowTop = xl ? 269 : 311;
   const sceneHeight = xl ? 404 : user.textSize === 'large' ? 441 : 436;
+  // いまいる エリアの 場面（背景・季節の ギミック・さわれる 目じるし）。とても大きいときは 地面を 30px 上げる
+  const { stage, phase } = stagePlaceAt(user.game.pos);
+  const groundY = GROUND_Y + shift;
 
   return (
     <Screen
@@ -75,9 +104,21 @@ export function HomeScreen() {
       tab="adventure"
       scene={
         <FitScene width={393} height={sceneHeight}>
-          <Place x={0} y={0}>
-            <img src={xl ? homeBgXlarge : homeBg} alt="" />
-          </Place>
+          {/* 歩いている 間は 歩きスマホ防止の 下に なるので、目じるしを 押せなくし、動きも 止める */}
+          <StageScene
+            layout="home"
+            stage={stage}
+            phase={phase}
+            seed={user.game.seed}
+            width={393}
+            height={sceneHeight}
+            groundY={groundY}
+            skyY={SKY_Y}
+            floorY={groundY + FLOOR_GAP}
+            bg={stageBackground(stage, xl ? homeBgXlarge : homeBg, shift)}
+            interactive={walk === 'idle'}
+            paused={walk !== 'idle'}
+          />
           <Place x={228} y={61}>
             <GameWindow className={s.pointWindow}>
               <img className={s.pointIcon} src={pointIcon} alt="" />
@@ -85,15 +126,43 @@ export function HomeScreen() {
               <p className={s.pointValue}>{formatSteps(user.game.points)}</p>
             </GameWindow>
           </Place>
-          <Place x={67} y={170 + shift}>
-            <img src={hero} alt="" />
+          <Place x={11} y={61}>
+            {/* エリア名の 札：名前と、7色の 糸（いまの 道と 色の もどった 道） */}
+            <p className={s.placeName} aria-label={`いまいる所：${place}`}>
+              <span className={s.placeText}>{place}</span>
+              <ThreadDots pos={user.game.pos} lap={user.game.lap} />
+            </p>
+            {/* ボスと戦っている間だけ、のこりの歩数を 小さく1行（名前は 読み上げで伝える。絵は 右に出ている） */}
+            {boss && (
+              <p className={s.bossLeft} aria-label={`ボス ${ENEMY_NAMES[boss.id]} あと ${formatSteps(boss.left)}歩`}>
+                ボス あと <strong>{formatSteps(boss.left)}歩</strong>
+              </p>
+            )}
           </Place>
-          <Place x={sprite.x} y={254 + shift - sprite.height * sprite.scale}>
-            <img
-              src={sprite.src}
-              alt=""
-              style={{ transform: `scale(${sprite.scale})`, transformOrigin: '0 0' } as CSSProperties}
-            />
+          <Place x={67} y={170 + shift}>
+            <img src={hero} alt="" data-hero />
+          </Place>
+          {/* 次の敵は その敵の 動きの型で 小さく 動く（画面は ゆらさない。動きを へらすときは 止まる） */}
+          <Place x={enemyX} y={enemyFootY - enemyHeight}>
+            <EnemyMotion id={enemy}>
+              <EnemySprite id={enemy} scale={enemyScale} />
+            </EnemyMotion>
+          </Place>
+          <Place
+            x={hpAbove ? Math.min(HP_CENTER_MAX, enemyX + (enemySprite(enemy).width * enemyScale) / 2) : HP_BELOW_LEFT}
+            y={hpAbove ? enemyFootY - enemyHeight - HP_GAP : enemyFootY + HP_GAP}
+            className={hpAbove ? s.hpAbove : s.hpBelow}
+          >
+            {/* ボスの のこりは 左上の行で 読み上げるので、ボスの バーは 読み上げない */}
+            <div data-next-hp={hp.boss ? 'boss' : 'enemy'} className={hpAbove ? undefined : s.hpBelowBox}>
+              <HpBar
+                left={hp.left}
+                total={hp.total}
+                tone={hpTone}
+                shrink={!hpAbove}
+                label={hp.boss ? undefined : `次の敵に 会うまで あと ${formatSteps(hp.left)}歩`}
+              />
+            </div>
           </Place>
           <Place x={11} y={windowTop}>
             <GameWindow className={s.statusWindow}>

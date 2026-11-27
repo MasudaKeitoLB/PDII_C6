@@ -1,0 +1,6 @@
+<svg width="60" height="20" viewBox="0 0 60 20" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+<title>ギミック：wave 波の先</title>
+<path d="M20 0h20v5h-20zM10 5h10v5h-10zM40 5h10v5h-10zM5 10h5v5h-5zM50 10h5v5h-5zM0 15h5v5h-5zM55 15h5v5h-5z" fill="#FFFFFF"/>
+<path d="M20 5h20v5h-20zM10 10h5v5h-5zM45 10h5v5h-5zM5 15h5v5h-5zM50 15h5v5h-5z" fill="#E3EEF8"/>
+<path d="M15 10h30v5h-30zM10 15h40v5h-40z" fill="#7EAEDC"/>
+</svg>

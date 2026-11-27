@@ -1,0 +1,23 @@
+name: おぼろづき
+palette:
+k #1E1B18 りんかく・目
+y #FFE9A8 月
+s #F2CF6B 月の かげ
+h #DDE4F7 かすみ
+grid:
+................
+......kkkkk.....
+.....kyyyyykk...
+.....kkkyyyyyk..
+........kyyyyyk.
+.hhhhhhh.kyyyyyk
+.........kyyyyyk
+.........kykykyk
+.........kyyyysk
+..hhhhhh.kyyyssk
+........kyyyssk.
+.....kkkyyyssk..
+.....kyyysskk...
+......kkkkk.....
+................
+................

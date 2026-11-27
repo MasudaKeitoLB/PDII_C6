@@ -1,0 +1,241 @@
+/* 成果の画面の 戦闘（場面 393×235 の中）。動きは どれも 小さく・ゆっくり。画面の ゆれ・点滅は 使わない。
+   いつ 動くかは data-phase（時計から 決める）、どう 動くかは ここ。
+   動きを へらす・画面を さわった ときは data-skip で すぐ おわりの 形にする（global.css でも 止まる） */
+
+.battle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 393px;
+  height: 235px;
+}
+.battle[data-skip] *,
+.overlay[data-skip] * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* ボスに 会う：背景が すこし 暗くなる（0.8秒で ゆっくり） */
+.dim {
+  position: absolute;
+  inset: 0;
+  background: rgb(15 21 48 / 0.38);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+.dim[data-on="true"] {
+  opacity: 1;
+}
+
+/* 1体ぶん：右から 16px ずれて、0.4秒で やわらかく 出る */
+.round {
+  position: absolute;
+  opacity: 0;
+  transform: translateX(16px);
+  transition:
+    opacity 0.35s ease-out,
+    transform 0.4s ease-out;
+}
+.round:not([data-phase="wait"]) {
+  opacity: 1;
+  transform: none;
+}
+
+/* 敵の 絵：消えるときは 明るくなりながら 小さく うすくなる（光の粒に なって おとなしく 消える） */
+.body {
+  transition:
+    opacity 0.4s ease-in,
+    transform 0.4s ease-in,
+    filter 0.4s ease-in;
+}
+.round[data-phase="vanish"] .body,
+.round[data-phase="gone"] .body {
+  opacity: 0;
+  transform: scale(0.85);
+  filter: brightness(1.7);
+}
+
+/* HPバー：敵の 頭の上（文字が 大きくても 右はしから はみ出さないよう 10px 左より）。敵が 消えるときに うすくなる */
+.bar {
+  position: absolute;
+  left: calc(50% - 10px);
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  transition: opacity 0.3s ease-in;
+}
+/* ボスの 長い バーは 右はしを そろえる（right は style） */
+.barRight {
+  left: auto;
+  transform: none;
+}
+.round[data-phase="vanish"] .bar,
+.round[data-phase="gone"] .bar {
+  opacity: 0;
+}
+
+/* 光の粒：敵の まん中から 上へ ふわっと ちって 消える（1回だけ） */
+.spark {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: var(--color-gold);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.7);
+  opacity: 0;
+}
+.spark:nth-child(even) {
+  background: var(--color-white);
+}
+.round[data-phase="vanish"] .spark,
+.round[data-phase="gone"] .spark {
+  animation: battle-spark 0.7s ease-out var(--d, 0s) both;
+}
+@keyframes battle-spark {
+  0% {
+    opacity: 0;
+    transform: none;
+  }
+  30% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+
+/* ポイントが 飛ぶ：「+10」が 敵の 上へ ふわっと 上がって 消える */
+.gain {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  margin-left: -30px;
+  width: 60px;
+  text-align: center;
+  font-family: var(--font-dot);
+  font-size: 22px;
+  line-height: 1;
+  color: var(--color-gold);
+  text-shadow:
+    0 2px 0 var(--color-sumi),
+    0 -1px 0 var(--color-sumi),
+    1px 0 0 var(--color-sumi),
+    -1px 0 0 var(--color-sumi);
+  opacity: 0;
+}
+.round[data-phase="vanish"] .gain,
+.round[data-phase="gone"] .gain {
+  animation: battle-gain 0.9s ease-out both;
+}
+@keyframes battle-gain {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  20% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(-18px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+
+/* てまり：主人公の 手から 敵の 手前まで、0.5秒かけて ぽんと 飛ぶ（速すぎない よう きょりも 短く） */
+.pon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-sumi);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 35%, #fff 0 1.5px, transparent 2.5px),
+    conic-gradient(#f2a7b8 0 25%, var(--color-gold) 0 50%, #f2a7b8 0 75%, var(--color-gold) 0);
+  opacity: 0;
+}
+.pon[data-on] {
+  animation: battle-pon 0.5s ease-out both;
+}
+@keyframes battle-pon {
+  0% {
+    opacity: 1;
+    transform: scale(0.7);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--pon-dx), -18px) scale(1);
+  }
+}
+
+/* てまり（エリアを こえる）：ゆっくり 出て、こえた 道の 区切りに 色が もどる */
+.temari {
+  display: block;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.6s ease-out;
+}
+.temari[data-on="true"] {
+  opacity: 1;
+  transform: none;
+}
+.seg {
+  fill: #f4f7fb;
+}
+.seg[data-new] {
+  transition: fill 0.9s ease 0.4s;
+}
+.temari[data-on="true"] .seg[data-new] {
+  fill: var(--c);
+}
+
+/* エリアを こえる：その季節の色が 場面の まん中から うすく 広がり（0.8秒より ゆっくり）、ゆっくり 消える。
+   文字の まどや ボタンには かけない */
+.spread {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 20%, var(--area-color) 0 45%, transparent 100%);
+  opacity: 0;
+  clip-path: circle(0% at 50% 20%);
+  transition:
+    opacity 0.9s ease,
+    clip-path 0s linear 0.9s;
+}
+.spread[data-on="true"] {
+  opacity: 0.2;
+  clip-path: circle(120% at 50% 20%);
+  transition:
+    opacity 0.8s ease,
+    clip-path 1.2s ease-out;
+}
+
+/* ---------- 画面ぜんたいに 重ねる 演出 ---------- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* レアに 会えた：画面が やわらかく 光る（0.6秒で 出て、0.8秒で 消える。点滅は しない） */
+.glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 72% 16%, rgb(255 197 61 / 0.45), rgb(255 197 61 / 0.14) 35%, transparent 62%);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+.glow[data-on="true"] {
+  opacity: 1;
+  transition-duration: 0.6s;
+}
+

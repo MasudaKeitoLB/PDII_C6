@@ -3,6 +3,7 @@ import { findAdmin } from '../lib/admin';
 import { dayKey, now } from '../lib/dates';
 import type { MotionSignal } from '../lib/motion';
 import { checkMotionAccess, recheckMotionAccess, requestSensorPermissions, watchAccelerometer, type MotionAccess } from '../lib/permissions';
+import { playSound } from '../lib/sound';
 import { readJson, writeJson } from '../lib/storage';
 import { ensureSampleData, findUser, getStore, recordSteps, useStore } from '../lib/store';
 import type { AdminAccount, AppUser, Birthday, Gender, ShareConsent } from '../lib/types';
@@ -184,6 +185,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const navigate = useCallback((next: RouteId) => {
     if (window.location.hash === `#${next}`) return;
     window.location.hash = next;
+    // hashchange（あとで 届く）を 待たずに 画面を かえる。ボタンを 押した その場で 新しい 画面に なる
+    setRoute(next);
   }, []);
 
   const updateRegistration = useCallback((patch: Partial<RegistrationDraft>) => {
@@ -228,11 +231,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     flushTimer.current = null;
   };
 
-  /** 数えた歩数を 記録する（歩いた人に入れる） */
+  /**
+   * 数えた歩数を 記録する（歩いた人に入れる）。
+   * 体の動きで 歩いていて 敵を たおしたら、小さな 鈴を 1回 鳴らす（「歩いている間の音」が 入の 人だけ。まとめて 記録するので つづけては 鳴らない）
+   */
   const flushSteps = () => {
     const { userId: id, steps } = pendingSteps.current;
     pendingSteps.current = { userId: null, steps: 0 };
-    if (id && steps > 0) recordSteps(id, steps, now());
+    if (!id || steps <= 0) return;
+    const before = findUser(id)?.game.pending?.enemies.length ?? 0;
+    const after = recordSteps(id, steps, now())?.game.pending?.enemies.length ?? 0;
+    if (walkSource.current === 'sensor' && after > before) playSound('walkBell');
   };
 
   /** 立ち止まって開くと、歩いた分の冒険の成果が見られる（M-07）。管理者画面などを見ているときは 画面を かえない */

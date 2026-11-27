@@ -10,6 +10,7 @@
     "preview": "vite preview --host",
     "typecheck": "tsc -b",
     "test": "node --test \"src/**/*.test.ts\"",
+    "balance": "node scripts/balance.ts",
     "build:demo": "tsc -b && vite build --config vite.demo.config.ts && node scripts/make-artifact.mjs",
     "e2e": "node e2e/buttons.e2e.mjs"
   },

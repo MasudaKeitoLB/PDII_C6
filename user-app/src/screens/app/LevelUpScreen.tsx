@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import sparkles from '../../assets/scene/levelup-sparkles.svg';
 import heroLarge from '../../assets/sprite/hero-large.svg';
 import { Button } from '../../components/Button';
@@ -5,6 +6,8 @@ import { FitScene, Place } from '../../components/FitScene';
 import { GameWindow } from '../../components/GameWindow';
 import { Screen } from '../../components/Screen';
 import { useAppState, useUser } from '../../flow/AppState';
+import { useSkipOnTouch } from '../../flow/usePreferences';
+import { playSound } from '../../lib/sound';
 import { finishAdventure } from '../../lib/store';
 import s from './levelup.module.css';
 
@@ -24,6 +27,12 @@ export function LevelUpScreen() {
     navigate('home');
   };
 
+  // 琴を 3音 上がり、さいごに 鈴（音が 切なら 鳴らさない）
+  useEffect(() => playSound('levelUp'), []);
+  // 画面を さわれば 演出は すぐ おわる
+  const skip = useSkipOnTouch();
+  const fx = (name: string) => (skip ? undefined : name);
+
   return (
     <Screen
       title="レベルアップ"
@@ -31,10 +40,10 @@ export function LevelUpScreen() {
       scene={
         <FitScene width={393} height={518}>
           <Place x={30} y={92}>
-            <img src={sparkles} alt="" />
+            <img className={fx(s.sparkles)} src={sparkles} alt="" />
           </Place>
           <Place x={0} y={130} className={s.titleWrap}>
-            <h1 className={s.title}>レベルアップ！</h1>
+            <h1 className={[s.title, fx(s.titleIn)].filter(Boolean).join(' ')}>レベルアップ！</h1>
           </Place>
           <Place x={92.5} y={214}>
             <span className={s.glow} />
@@ -48,9 +57,10 @@ export function LevelUpScreen() {
           <Place x={0} y={442} className={s.changeWrap}>
             <p className={s.change} aria-label={`レベル${from}から${to}に上がりました`}>
               <span className={s.changeLabel}>レベル</span>
-              <span className={s.changeFrom}>{from}</span>
-              <span className={s.changeArrow}>→</span>
-              <span className={s.changeTo}>{to}</span>
+              {/* 数字が 入れかわる：前の数は すこし うすくなり、新しい数が 下から 上がって 出る */}
+              <span className={[s.changeFrom, fx(s.fromOut)].filter(Boolean).join(' ')}>{from}</span>
+              <span className={[s.changeArrow, fx(s.arrowIn)].filter(Boolean).join(' ')}>→</span>
+              <span className={[s.changeTo, fx(s.toIn)].filter(Boolean).join(' ')}>{to}</span>
             </p>
           </Place>
         </FitScene>

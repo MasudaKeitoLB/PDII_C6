@@ -1,0 +1,25 @@
+name: でんでんまる
+palette:
+k #1E1B18 りんかく・目
+s #B87736 から
+d #7F4F22 うずまき
+h #E0A860 からの ひかり
+y #FBE9A8 体
+c #E3C877 体の かげ
+grid:
+................
+................
+................
+........kkkkk...
+.k..k..ksssssk..
+.k..k.kshddddsk.
+.k..k.ksdssssdsk
+.kkkk.ksdsddsdsk
+kyyyykksdsdssdsk
+kykykyksdsddddsk
+kykykyksdssssssk
+kyyyyyyksddddsk.
+kyyyyyyykkkkkkk.
+kyyyyyyyyyyyyyyk
+.kyyyyyyyyyyccck
+..kkkkkkkkkkkkk.

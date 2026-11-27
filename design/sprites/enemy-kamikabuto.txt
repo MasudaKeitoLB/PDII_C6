@@ -1,0 +1,23 @@
+name: かみかぶと
+palette:
+k #1E1B18 りんかく・目
+p #F3E6C8 紙
+s #D9C7A0 紙の かげ
+f #9AA0A8 おり目・文字
+grid:
+kk............kk
+kpk..........kpk
+kppk........kppk
+kpppk..kk..kpppk
+.kppk.kppk.kppk.
+.kpppkppppkpppk.
+.kpppfppppfpppk.
+..kppfppppfppk..
+..kpfppppppfpk..
+.kppfkkppkkfppk.
+.kpfpkkppkkpfpk.
+kppfppppppppfspk
+kkkkkkkkkkkkkkkk
+kppppppppppppssk
+kpffpfpffpfpfssk
+kkkkkkkkkkkkkkkk

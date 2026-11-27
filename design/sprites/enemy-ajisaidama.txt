@@ -1,0 +1,25 @@
+name: あじさいだま
+palette:
+k #1E1B18 りんかく・目
+a #7A8FD0 花
+p #C3CDF2 小花の 十字
+v #5868B0 花の かげ
+g #3E9A63 葉
+l #A8D672 葉の すじ
+grid:
+................
+.....kkkkkk.....
+...kkaapaaakk...
+..kaapppaaapak..
+..kaaapaaapppk..
+.kapaaaaaaapavk.
+.kpppkkaakkaavk.
+.kapakkaakkavvk.
+.kaaaaapaaaavvk.
+kkkaaapppaavvkkk
+kgkkvaapaavvkkgk
+kggkkkvvvvkkkggk
+.kgglgkkkkglggk.
+kgglggk..kgglggk
+.kkgggk..kgggkk.
+...kkk....kkk...

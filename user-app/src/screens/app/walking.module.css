@@ -1,4 +1,4 @@
-/* H-02：紺の画面。上から 歩いています（192×44）→ 絵 → 文 → 下の台（353×64） */
+/* H-02：紺の画面。上から 歩いています（192×44）→ 道の場面（WalkScene・walkScene.module.css）→ 文 → 下の台（353×64） */
 .lock {
   position: absolute;
   inset: 0;
@@ -11,6 +11,21 @@
   background: var(--color-navy);
   color: var(--color-white);
   text-align: center;
+  /* 歩きはじめ：急に 切りかえず、0.4秒で ふわっと 出す */
+  animation: lock-in 0.4s ease-out both;
+}
+@keyframes lock-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 歩いている ↔ 止まった の 文字の 入れかえ */
+.swap {
+  animation: lock-in 0.5s ease-out both;
 }
 
 .pill {
@@ -25,10 +40,6 @@
   background: var(--color-navy-2);
   font-size: 19px;
   font-weight: 700;
-}
-
-.picture {
-  margin-top: 75.3px;
 }
 
 .headline {

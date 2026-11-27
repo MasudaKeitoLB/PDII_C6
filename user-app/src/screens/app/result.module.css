@@ -81,6 +81,23 @@
   color: var(--color-navy-sub);
 }
 
+/* ボス・レア・こえたエリアの行（内容があるときだけ出る） */
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 23px 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-note);
+  line-height: 1.4;
+  font-weight: 700;
+  color: var(--color-gold);
+  /* 行は ことばの区切り（空白）で 折り返す。長すぎる ことばだけ 途中で 折る */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
 .divider2 {
   margin-top: 22px;
 }
@@ -126,6 +143,44 @@
   font-weight: 700;
   color: var(--color-gold);
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 演出（動きを へらす ときは global.css で 止める） ---------- */
+
+/* 敵の絵：右から すこし ずれて、1体ずつ やわらかく 出る（間は style の animation-delay） */
+.enemyIn {
+  animation: enemy-in 0.42s ease-out both;
+}
+@keyframes enemy-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* レア・ボス・こえたエリアの行：下から すこし 上がって 出る */
+.noteIn {
+  animation: note-in 0.6s ease-out both;
+}
+@keyframes note-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 画面を さわったら すぐ おわりの 形を 出す */
+.skip .enemyIn,
+.skip .noteIn {
+  animation: none;
 }
 
 .empty {
